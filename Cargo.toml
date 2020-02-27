@@ -1,10 +1,12 @@
 [package]
 name = "dlr"
-version = "0.1.0"
-authors = ["pablo.tato"]
+version = "1.0.0"
+authors = ["Pablo Tato Ramos"]
+license = "MIT"
 edition = "2018"
-
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[dependencies]
-sdl2 = "*"
+[dependencies.sdl2]
+version = "0.33"
+default-features = false
+features = [ "bundled", "ttf" ]

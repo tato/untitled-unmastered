@@ -1,39 +1,82 @@
 extern crate sdl2;
 
 use sdl2::pixels::Color;
-use sdl2::event::Event;
-use sdl2::keyboard::Keycode;
-use std::time::Duration;
+
+const BEE_MOVIE_SCRIPT: &'static str = "According to all known laws of aviation,
+there is no way a bee should be able to fly.
+  
+Its wings are too small to get its fat little body off the ground.
+  
+The bee, of course, flies anyway
+  
+because bees don't care what humans think is impossible.
+  
+Yellow, black. Yellow, black.
+Yellow, black. Yellow, black.
+
+Ooh, black and yellow!
+Let's shake it up a little.
+  
+Barry! Breakfast is ready!";
+
 
 fn main() {
-    // TODO search unwrap()
     let sdl_context = sdl2::init().unwrap();
     let sdl_video = sdl_context.video().unwrap();
+    let sdl_ttf = sdl2::ttf::init().unwrap();
 
-    let window = sdl_video.window("demo", 800, 600)
+    let cousine = sdl_ttf.load_font("./Cousine-Regular.ttf", 14).unwrap();
+
+    let measure_surface = cousine.render("A").blended(Color::RGB(0,0,0)).unwrap();
+    let character_width = measure_surface.width();
+    let character_height = measure_surface.height();
+
+    let characters_wide = 80u32;
+    let characters_high = 30u32;
+
+    let window = sdl_video.window("ttttt...", character_width*characters_wide, character_height*characters_high)
         .position_centered()
         .opengl()
         .build()
         .unwrap();
 
     let mut canvas = window.into_canvas().build().unwrap();
-    canvas.set_draw_color(Color::RGB(255, 0, 0));
+    let texture_creator = canvas.texture_creator();
+
+    canvas.set_draw_color(Color::RGB(250, 250, 250));
     canvas.clear();
     canvas.present();
 
     let mut event_pump = sdl_context.event_pump().unwrap();
+
+    use sdl2::event::Event;
+    use sdl2::keyboard::Keycode;
     'running: loop {
         for event in event_pump.poll_iter() {
             match event {
-                Event::Quit {..} | Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
-                    break 'running
+                Event::Quit {..} | Event::KeyDown { keycode: Some(Keycode::Escape), ..} => {
+                    break 'running;
                 },
                 _ => { }
             }
         }
 
+        canvas.set_draw_color(Color::RGB(250, 250, 250));
         canvas.clear();
+
+        for (line_index, line) in BEE_MOVIE_SCRIPT.split("\n").enumerate() {
+            if line.len() == 0 { continue; }
+            let text_surface = cousine.render(line).blended(Color::RGB(0,0,0)).unwrap();
+            let texture = texture_creator.create_texture_from_surface(&text_surface).unwrap();
+
+            let target_y: i32 = (line_index as i32)*(character_height as i32);
+            use sdl2::rect::Rect;
+            let target = Rect::new(0, target_y, text_surface.width(), text_surface.height());
+            canvas.copy(&texture, None, Some(target)).unwrap();
+        }
+
         canvas.present();
-        ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 30));
+
+        ::std::thread::sleep(std::time::Duration::new(0, 1_000_000u32 / 30));
     }
 }
