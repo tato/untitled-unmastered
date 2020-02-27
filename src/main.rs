@@ -2,24 +2,6 @@ extern crate sdl2;
 
 use sdl2::pixels::Color;
 
-const BEE_MOVIE_SCRIPT: &'static str = "According to all known laws of aviation,
-there is no way a bee should be able to fly.
-  
-Its wings are too small to get its fat little body off the ground.
-  
-The bee, of course, flies anyway
-  
-because bees don't care what humans think is impossible.
-  
-Yellow, black. Yellow, black.
-Yellow, black. Yellow, black.
-
-Ooh, black and yellow!
-Let's shake it up a little.
-  
-Barry! Breakfast is ready!";
-
-
 fn main() {
     let sdl_context = sdl2::init().unwrap();
     let sdl_video = sdl_context.video().unwrap();
@@ -33,6 +15,8 @@ fn main() {
 
     let characters_wide = 80u32;
     let characters_high = 30u32;
+
+    let mut current_text = String::new();
 
     let window = sdl_video.window("ttttt...", character_width*characters_wide, character_height*characters_high)
         .position_centered()
@@ -57,6 +41,9 @@ fn main() {
                 Event::Quit {..} | Event::KeyDown { keycode: Some(Keycode::Escape), ..} => {
                     break 'running;
                 },
+                Event::TextInput { text, .. } => {
+                    current_text = format!("{}{}", current_text, text);
+                },
                 _ => { }
             }
         }
@@ -64,7 +51,7 @@ fn main() {
         canvas.set_draw_color(Color::RGB(250, 250, 250));
         canvas.clear();
 
-        for (line_index, line) in BEE_MOVIE_SCRIPT.split("\n").enumerate() {
+        for (line_index, line) in current_text.split("\n").enumerate() {
             if line.len() == 0 { continue; }
             let text_surface = cousine.render(line).blended(Color::RGB(0,0,0)).unwrap();
             let texture = texture_creator.create_texture_from_surface(&text_surface).unwrap();
