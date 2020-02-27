@@ -2,6 +2,14 @@ extern crate sdl2;
 
 use sdl2::pixels::Color;
 
+#[derive(Default)]
+struct Editor {
+    text: String,
+
+    cursor_x: u32,
+    cursor_y: u32,
+}
+
 fn main() {
     let sdl_context = sdl2::init().unwrap();
     let sdl_video = sdl_context.video().unwrap();
@@ -16,7 +24,7 @@ fn main() {
     let characters_wide = 80u32;
     let characters_high = 30u32;
 
-    let mut current_text = String::new();
+    let mut editor: Editor = Default::default();
 
     let window = sdl_video.window("ttttt...", character_width*characters_wide, character_height*characters_high)
         .position_centered()
@@ -42,13 +50,13 @@ fn main() {
                     break 'running;
                 },
                 Event::KeyDown { keycode: Some(Keycode::Backspace), .. } => {
-                    current_text = current_text[0..current_text.len()-1].to_string();
+                    editor.text = editor.text[0..editor.text.len()-1].to_string();
                 },
                 Event::KeyDown { keycode: Some(Keycode::Return), .. } => {
-                    current_text.push('\n');
+                    editor.text.push('\n');
                 },
                 Event::TextInput { text, .. } => {
-                    current_text = format!("{}{}", current_text, text);
+                    editor.text = format!("{}{}", editor.text, text);
                 },
                 _ => { }
             }
@@ -57,7 +65,7 @@ fn main() {
         canvas.set_draw_color(Color::RGB(250, 250, 250));
         canvas.clear();
 
-        for (line_index, line) in current_text.split("\n").enumerate() {
+        for (line_index, line) in editor.text.split("\n").enumerate() {
             if line.len() == 0 { continue; }
             let text_surface = cousine.render(line).blended(Color::RGB(0,0,0)).unwrap();
             let texture = texture_creator.create_texture_from_surface(&text_surface).unwrap();
@@ -67,6 +75,12 @@ fn main() {
             let target = Rect::new(0, target_y, text_surface.width(), text_surface.height());
             canvas.copy(&texture, None, Some(target)).unwrap();
         }
+
+        canvas.set_draw_color(Color::RGB(0,0,0));
+        let cursor_screen_x = (editor.cursor_x*character_width) as i32;
+        let cursor_screen_y = (editor.cursor_y*character_height) as i32;
+        let rect = sdl2::rect::Rect::new(cursor_screen_x, cursor_screen_y, character_width, character_height);
+        canvas.fill_rect(rect).unwrap();
 
         canvas.present();
 
