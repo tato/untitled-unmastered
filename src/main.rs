@@ -41,6 +41,12 @@ fn main() {
                 Event::Quit {..} | Event::KeyDown { keycode: Some(Keycode::Escape), ..} => {
                     break 'running;
                 },
+                Event::KeyDown { keycode: Some(Keycode::Backspace), .. } => {
+                    current_text = current_text[0..current_text.len()-1].to_string();
+                },
+                Event::KeyDown { keycode: Some(Keycode::Return), .. } => {
+                    current_text.push('\n');
+                },
                 Event::TextInput { text, .. } => {
                     current_text = format!("{}{}", current_text, text);
                 },
