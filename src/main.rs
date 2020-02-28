@@ -93,17 +93,35 @@ int main(int argc, char **argv) {
                     break 'running;
                 },
                 Event::KeyDown { keycode: Some(Keycode::Backspace), .. } => {
-                    if let Some(last_line) = editor.buffer_lines.last_mut() {
-                        if last_line.is_empty() {
-                            editor.buffer_lines.truncate(editor.buffer_lines.len() - 1);
-                        } else {
-                            last_line.truncate(last_line.len() - 1);
+                    let actual_y = min(editor.cursor_y as usize, editor.buffer_lines.len() - 1);
+
+                    let mut maybe_cursor_x = -1i32;
+
+                    let bl = &mut editor.buffer_lines;
+                    let actual_x = min(editor.cursor_x as usize, bl[actual_y].len());
+                    if actual_x == 0 {
+                        let deleted_line = bl.remove(actual_y);
+                        if let Some(prev_line) = bl.get_mut(actual_y - 1) {
+                            maybe_cursor_x = prev_line.len() as i32;
+                            prev_line.push_str(&deleted_line);
                         }
-                        editor.move_cursor(-1, 0);
+                    } else {
+                        bl[actual_y].remove(actual_x);
+                    }
+                    editor.move_cursor(-1, 0);
+                    if maybe_cursor_x >= 0 {
+                        editor.cursor_x = maybe_cursor_x as u32;
                     }
                 },
                 Event::KeyDown { keycode: Some(Keycode::Return), .. } => {
-                    editor.buffer_lines.push(String::from(""));
+                    let actual_y = min(editor.cursor_y as usize, editor.buffer_lines.len() - 1);
+
+                    let line = &mut editor.buffer_lines[actual_y];
+                    let actual_x = min(editor.cursor_x as usize, line.len());
+                    let new_line = line.split_off(actual_x);
+
+                    editor.buffer_lines.insert(actual_y + 1, new_line);
+
                     editor.move_cursor(0, 1);
                     editor.cursor_x = 0;
                 },
