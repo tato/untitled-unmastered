@@ -2,7 +2,6 @@ extern crate sdl2;
 
 use sdl2::pixels::Color;
 use sdl2::surface::Surface;
-use sdl2::pixels::PixelFormatEnum;
 use sdl2::rect::Rect;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
@@ -13,6 +12,27 @@ struct Editor {
 
     cursor_x: u32,
     cursor_y: u32,
+    cursor_frame: u32,
+}
+impl Editor {
+    pub fn move_cursor(&mut self, x: i32, y: i32) {
+        if self.cursor_x == 0 && x < 0 {
+            if self.cursor_y != 0 {
+                self.cursor_y -= 1;
+                let lines: Vec<&str> = self.text.split('\n').collect();
+                self.cursor_x = lines.get(self.cursor_y as usize).unwrap_or(&"").len() as u32;
+            }
+        } else {
+            self.cursor_x = ((self.cursor_x as i32) + x) as u32;
+        }
+
+        if self.cursor_y == 0 && y < 0 {
+            self.cursor_y = 0;
+        } else {
+            self.cursor_y = ((self.cursor_y as i32) + y) as u32;
+        }
+        self.cursor_frame = 0;
+    }
 }
 
 fn main() {
@@ -34,6 +54,12 @@ fn main() {
     let background_color = Color::RGB(250, 250, 250);
 
     let mut editor: Editor = Default::default();
+    editor.text = String::from("#include <stdio.h>
+
+int main(int argc, char **argv) {
+    printf(\"%s\", \"Hello World!\");
+    return 0;
+}");
 
     let window = sdl_video.window("ttttt...", character_width*characters_wide, character_height*characters_high)
         .position_centered()
@@ -50,8 +76,6 @@ fn main() {
 
     let mut event_pump = sdl_context.event_pump().unwrap();
 
-    let mut frame_number = 0u64;
-
     'running: loop {
         for event in event_pump.poll_iter() {
             match event {
@@ -61,24 +85,29 @@ fn main() {
                 Event::KeyDown { keycode: Some(Keycode::Backspace), .. } => {
                     if !editor.text.is_empty() {
                         editor.text = editor.text.chars().take(editor.text.len()-1).collect();
-
-                        if editor.cursor_x == 0 {
-                            let lines: Vec<&str> = editor.text.split('\n').collect();
-                            editor.cursor_x = lines.last().unwrap_or(&"").len() as u32;
-                            editor.cursor_y -= 1;
-                        } else {
-                            editor.cursor_x -= 1;
-                        }
+                        editor.move_cursor(-1, 0);
                     }
                 },
                 Event::KeyDown { keycode: Some(Keycode::Return), .. } => {
                     editor.text.push('\n');
+                    editor.move_cursor(0, 1);
                     editor.cursor_x = 0;
-                    editor.cursor_y += 1;
                 },
                 Event::TextInput { text, .. } => {
                     editor.text = format!("{}{}", editor.text, text);
-                    editor.cursor_x += text.len() as u32;
+                    editor.move_cursor(1, 0);
+                },
+                Event::KeyDown { keycode: Some(Keycode::Left), .. } => {
+                    editor.move_cursor(-1, 0);
+                },
+                Event::KeyDown { keycode: Some(Keycode::Right), .. } => {
+                    editor.move_cursor(1, 0);
+                },
+                Event::KeyDown { keycode: Some(Keycode::Up), .. } => {
+                    editor.move_cursor(0, -1);
+                },
+                Event::KeyDown { keycode: Some(Keycode::Down), .. } => {
+                    editor.move_cursor(0, 1);
                 },
                 _ => { }
             }
@@ -98,14 +127,15 @@ fn main() {
         }
 
         let cursor_color_interval = 250;
-        let cursor_color = if (frame_number / cursor_color_interval) % 2 == 0 {
+        let cursor_color = if (editor.cursor_frame / cursor_color_interval) % 2 == 0 {
             foreground_color
         } else {
             background_color
         };
+        editor.cursor_frame += 1;
 
         let mut cursor_surface = Surface::new(character_width, character_height, 
-                                              PixelFormatEnum::RGBA8888).unwrap();
+                                              canvas.default_pixel_format()).unwrap();
         let cursor_screen_x = (editor.cursor_x*character_width) as i32;
         let cursor_screen_y = (editor.cursor_y*character_height) as i32;
         let rect = Rect::new(cursor_screen_x, cursor_screen_y, 
@@ -116,7 +146,6 @@ fn main() {
 
         canvas.present();
 
-        frame_number += 1;
         ::std::thread::sleep(std::time::Duration::new(0, 1_000_000u32 / 30));
     }
 }
