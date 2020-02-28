@@ -12,7 +12,6 @@ struct Editor {
 
     cursor_x: u32,
     cursor_y: u32,
-    cursor_frame: u32,
 }
 impl Editor {
     pub fn move_cursor(&mut self, x: i32, y: i32) {
@@ -38,6 +37,7 @@ impl Editor {
 fn main() {
     let sdl_context = sdl2::init().unwrap();
     let sdl_video = sdl_context.video().unwrap();
+    let mut sdl_timer = sdl_context.timer().unwrap();
     let sdl_ttf = sdl2::ttf::init().unwrap();
 
     let cousine = sdl_ttf.load_font("./Cousine-Regular.ttf", 14).unwrap();
@@ -126,13 +126,13 @@ int main(int argc, char **argv) {
             canvas.copy(&texture, None, Some(target)).unwrap();
         }
 
-        let cursor_color_interval = 250;
-        let cursor_color = if (editor.cursor_frame / cursor_color_interval) % 2 == 0 {
+        let cursor_color_ms_interval = 500;
+        let elapsed_ms = sdl_timer.ticks();
+        let cursor_color = if (elapsed_ms / cursor_color_ms_interval) % 2 == 0 {
             foreground_color
         } else {
             background_color
         };
-        editor.cursor_frame += 1;
 
         let mut cursor_surface = Surface::new(character_width, character_height, 
                                               canvas.default_pixel_format()).unwrap();
