@@ -16,10 +16,11 @@ fn main() {
     let sdl_ttf = sdl2::ttf::init().unwrap();
 
     let cousine = sdl_ttf.load_font("./Cousine-Regular.ttf", 14).unwrap();
+    assert!(cousine.face_is_fixed_width());
 
-    let measure_surface = cousine.render("A").blended(Color::RGB(0,0,0)).unwrap();
-    let character_width = measure_surface.width();
-    let character_height = measure_surface.height();
+    let any_character_metrics = cousine.find_glyph_metrics('A').unwrap();
+    let character_width:  u32 = any_character_metrics.advance as u32;
+    let character_height: u32 = cousine.recommended_line_spacing() as u32;
 
     let characters_wide = 80u32;
     let characters_high = 30u32;
@@ -50,13 +51,26 @@ fn main() {
                     break 'running;
                 },
                 Event::KeyDown { keycode: Some(Keycode::Backspace), .. } => {
-                    editor.text = editor.text[0..editor.text.len()-1].to_string();
+                    if !editor.text.is_empty() {
+                        editor.text = editor.text.chars().take(editor.text.len()-1).collect();
+
+                        if editor.cursor_x == 0 {
+                            let lines: Vec<&str> = editor.text.split('\n').collect();
+                            editor.cursor_x = lines.last().unwrap_or(&"").len() as u32;
+                            editor.cursor_y -= 1;
+                        } else {
+                            editor.cursor_x -= 1;
+                        }
+                    }
                 },
                 Event::KeyDown { keycode: Some(Keycode::Return), .. } => {
                     editor.text.push('\n');
+                    editor.cursor_x = 0;
+                    editor.cursor_y += 1;
                 },
                 Event::TextInput { text, .. } => {
                     editor.text = format!("{}{}", editor.text, text);
+                    editor.cursor_x += text.len() as u32;
                 },
                 _ => { }
             }
@@ -65,8 +79,8 @@ fn main() {
         canvas.set_draw_color(Color::RGB(250, 250, 250));
         canvas.clear();
 
-        for (line_index, line) in editor.text.split("\n").enumerate() {
-            if line.len() == 0 { continue; }
+        for (line_index, line) in editor.text.split('\n').enumerate() {
+            if line.is_empty() { continue; }
             let text_surface = cousine.render(line).blended(Color::RGB(0,0,0)).unwrap();
             let texture = texture_creator.create_texture_from_surface(&text_surface).unwrap();
 
