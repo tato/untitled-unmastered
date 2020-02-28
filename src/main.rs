@@ -1,6 +1,7 @@
 extern crate sdl2;
 
 use std::time::Instant;
+use std::cmp::min;
 use sdl2::pixels::Color;
 use sdl2::surface::Surface;
 use sdl2::rect::Rect;
@@ -92,12 +93,14 @@ int main(int argc, char **argv) {
                     break 'running;
                 },
                 Event::KeyDown { keycode: Some(Keycode::Backspace), .. } => {
-                    /*
-                    if !editor.text.is_empty() {
-                        editor.text = editor.text.chars().take(editor.text.len()-1).collect();
+                    if let Some(last_line) = editor.buffer_lines.last_mut() {
+                        if last_line.is_empty() {
+                            editor.buffer_lines.truncate(editor.buffer_lines.len() - 1);
+                        } else {
+                            last_line.truncate(last_line.len() - 1);
+                        }
                         editor.move_cursor(-1, 0);
                     }
-                    */
                 },
                 Event::KeyDown { keycode: Some(Keycode::Return), .. } => {
                     editor.buffer_lines.push(String::from(""));
@@ -105,9 +108,12 @@ int main(int argc, char **argv) {
                     editor.cursor_x = 0;
                 },
                 Event::TextInput { text, .. } => {
-                    if let Some(last_line) = editor.buffer_lines.last_mut() {
-                        *last_line = format!("{}{}", last_line, text);
-                        editor.move_cursor(1, 0);
+                    if let Some(line) = editor.buffer_lines.get_mut(editor.cursor_y as usize) {
+                        let actual_x = min(editor.cursor_x as usize, line.len());
+                        let mut vec_line = line.chars().collect::<Vec<_>>();
+                        vec_line.splice(actual_x..actual_x, text.chars().collect::<Vec<char>>());
+                        *line = vec_line.iter().collect();
+                        editor.move_cursor(text.len() as i32, 0);
                     }
                 },
                 Event::KeyDown { keycode: Some(Keycode::Left), .. } => {
