@@ -1,6 +1,11 @@
 extern crate sdl2;
 
 use sdl2::pixels::Color;
+use sdl2::surface::Surface;
+use sdl2::pixels::PixelFormatEnum;
+use sdl2::rect::Rect;
+use sdl2::event::Event;
+use sdl2::keyboard::Keycode;
 
 #[derive(Default)]
 struct Editor {
@@ -25,6 +30,9 @@ fn main() {
     let characters_wide = 80u32;
     let characters_high = 30u32;
 
+    let foreground_color = Color::RGB(0, 0, 0);
+    let background_color = Color::RGB(250, 250, 250);
+
     let mut editor: Editor = Default::default();
 
     let window = sdl_video.window("ttttt...", character_width*characters_wide, character_height*characters_high)
@@ -36,14 +44,14 @@ fn main() {
     let mut canvas = window.into_canvas().build().unwrap();
     let texture_creator = canvas.texture_creator();
 
-    canvas.set_draw_color(Color::RGB(250, 250, 250));
+    canvas.set_draw_color(background_color);
     canvas.clear();
     canvas.present();
 
     let mut event_pump = sdl_context.event_pump().unwrap();
 
-    use sdl2::event::Event;
-    use sdl2::keyboard::Keycode;
+    let mut frame_number = 0u64;
+
     'running: loop {
         for event in event_pump.poll_iter() {
             match event {
@@ -76,28 +84,39 @@ fn main() {
             }
         }
 
-        canvas.set_draw_color(Color::RGB(250, 250, 250));
+        canvas.set_draw_color(background_color);
         canvas.clear();
 
         for (line_index, line) in editor.text.split('\n').enumerate() {
             if line.is_empty() { continue; }
-            let text_surface = cousine.render(line).blended(Color::RGB(0,0,0)).unwrap();
+            let text_surface = cousine.render(line).blended(foreground_color).unwrap();
             let texture = texture_creator.create_texture_from_surface(&text_surface).unwrap();
 
             let target_y: i32 = (line_index as i32)*(character_height as i32);
-            use sdl2::rect::Rect;
             let target = Rect::new(0, target_y, text_surface.width(), text_surface.height());
             canvas.copy(&texture, None, Some(target)).unwrap();
         }
 
-        canvas.set_draw_color(Color::RGB(0,0,0));
+        let cursor_color_interval = 250;
+        let cursor_color = if (frame_number / cursor_color_interval) % 2 == 0 {
+            foreground_color
+        } else {
+            background_color
+        };
+
+        let mut cursor_surface = Surface::new(character_width, character_height, 
+                                              PixelFormatEnum::RGBA8888).unwrap();
         let cursor_screen_x = (editor.cursor_x*character_width) as i32;
         let cursor_screen_y = (editor.cursor_y*character_height) as i32;
-        let rect = sdl2::rect::Rect::new(cursor_screen_x, cursor_screen_y, character_width, character_height);
-        canvas.fill_rect(rect).unwrap();
+        let rect = Rect::new(cursor_screen_x, cursor_screen_y, 
+                             character_width, character_height);
+        cursor_surface.fill_rect(None, cursor_color).unwrap();
+        let cursor_texture = texture_creator.create_texture_from_surface(&cursor_surface).unwrap();
+        canvas.copy(&cursor_texture, None, Some(rect)).unwrap();
 
         canvas.present();
 
+        frame_number += 1;
         ::std::thread::sleep(std::time::Duration::new(0, 1_000_000u32 / 30));
     }
 }
