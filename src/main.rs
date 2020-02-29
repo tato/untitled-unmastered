@@ -11,8 +11,8 @@ use sdl2::keyboard::Keycode;
 struct Editor {
     buffer_lines: Vec<String>,
 
-    cursor_x: u32,
-    cursor_y: u32,
+    cursor_x: usize,
+    cursor_y: usize,
     cursor_animation_instant: Instant,
 }
 impl Default for Editor {
@@ -30,17 +30,25 @@ impl Editor {
         if self.cursor_x == 0 && x < 0 {
             if self.cursor_y != 0 {
                 self.cursor_y -= 1;
-                self.cursor_x = self.buffer_lines.get(self.cursor_y as usize).unwrap_or(&String::from("")).len() as u32;
+                self.cursor_x = self.buffer_lines.get(self.cursor_y).unwrap_or(&String::from("")).len();
             }
         } else {
-            self.cursor_x = ((self.cursor_x as i32) + x) as u32;
+            self.cursor_x = ((self.cursor_x as i32) + x) as usize;
         }
 
         if self.cursor_y == 0 && y < 0 {
             self.cursor_y = 0;
         } else {
-            self.cursor_y = ((self.cursor_y as i32) + y) as u32;
+            self.cursor_y = ((self.cursor_y as i32) + y) as usize;
         }
+
+        if self.cursor_y >= self.buffer_lines.len() {
+            self.cursor_y = self.buffer_lines.len() - 1;
+        }
+        if self.cursor_x >= self.buffer_lines[self.cursor_y].len() {
+            self.cursor_x = self.buffer_lines[self.cursor_y].len();
+        }
+
         self.cursor_animation_instant = Instant::now();
     }
 }
@@ -93,12 +101,12 @@ int main(int argc, char **argv) {
                     break 'running;
                 },
                 Event::KeyDown { keycode: Some(Keycode::Backspace), .. } => {
-                    let actual_y = min(editor.cursor_y as usize, editor.buffer_lines.len() - 1);
+                    let actual_y = min(editor.cursor_y, editor.buffer_lines.len() - 1);
 
                     let mut maybe_cursor_x = -1i32;
 
                     let bl = &mut editor.buffer_lines;
-                    let actual_x = min(editor.cursor_x as usize, bl[actual_y].len());
+                    let actual_x = min(editor.cursor_x, bl[actual_y].len());
                     if actual_x == 0 {
                         let deleted_line = bl.remove(actual_y);
                         if let Some(prev_line) = bl.get_mut(actual_y - 1) {
@@ -110,14 +118,14 @@ int main(int argc, char **argv) {
                     }
                     editor.move_cursor(-1, 0);
                     if maybe_cursor_x >= 0 {
-                        editor.cursor_x = maybe_cursor_x as u32;
+                        editor.cursor_x = maybe_cursor_x as usize;
                     }
                 },
                 Event::KeyDown { keycode: Some(Keycode::Return), .. } => {
-                    let actual_y = min(editor.cursor_y as usize, editor.buffer_lines.len() - 1);
+                    let actual_y = min(editor.cursor_y, editor.buffer_lines.len() - 1);
 
                     let line = &mut editor.buffer_lines[actual_y];
-                    let actual_x = min(editor.cursor_x as usize, line.len());
+                    let actual_x = min(editor.cursor_x, line.len());
                     let new_line = line.split_off(actual_x);
 
                     editor.buffer_lines.insert(actual_y + 1, new_line);
@@ -126,8 +134,8 @@ int main(int argc, char **argv) {
                     editor.cursor_x = 0;
                 },
                 Event::TextInput { text, .. } => {
-                    if let Some(line) = editor.buffer_lines.get_mut(editor.cursor_y as usize) {
-                        let actual_x = min(editor.cursor_x as usize, line.len());
+                    if let Some(line) = editor.buffer_lines.get_mut(editor.cursor_y) {
+                        let actual_x = min(editor.cursor_x, line.len());
                         let mut vec_line = line.chars().collect::<Vec<_>>();
                         vec_line.splice(actual_x..actual_x, text.chars().collect::<Vec<char>>());
                         *line = vec_line.iter().collect();
@@ -173,8 +181,8 @@ int main(int argc, char **argv) {
 
         let mut cursor_surface = Surface::new(character_width, character_height, 
                                               canvas.default_pixel_format()).unwrap();
-        let cursor_screen_x = (editor.cursor_x*character_width) as i32;
-        let cursor_screen_y = (editor.cursor_y*character_height) as i32;
+        let cursor_screen_x = ((editor.cursor_x as u32)*character_width) as i32;
+        let cursor_screen_y = ((editor.cursor_y as u32)*character_height) as i32;
         let rect = Rect::new(cursor_screen_x, cursor_screen_y, 
                              character_width, character_height);
         cursor_surface.fill_rect(None, cursor_color).unwrap();
