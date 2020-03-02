@@ -150,18 +150,6 @@ int main(int argc, char **argv) {
 
         render.start_frame(background_color);
 
-        for (line_index, line) in editor.buffer_lines.iter().enumerate() {
-            for (ch_index, ch) in line.chars().enumerate() {
-                let ch_surface = cousine.get_surface_for(ch, foreground_color);
-
-                let target_x: i32 = (ch_index as i32)*(character_width as i32);
-                let target_y: i32 = (line_index as i32)*(character_height as i32);
-                let target = Rect::new(target_x, target_y, ch_surface.width(), ch_surface.height());
-
-                render.copy_surface(ch_surface, target);
-            }
-        }
-
         let cursor_color_ms_interval = 500;
         let elapsed_ms = editor.cursor_animation_instant.elapsed().as_millis();
         let cursor_color = if (elapsed_ms / cursor_color_ms_interval) % 2 == 0 {
@@ -172,8 +160,32 @@ int main(int argc, char **argv) {
 
         let cursor_screen_x = (editor.cursor_x*character_width) as i32;
         let cursor_screen_y = (editor.cursor_y*character_height) as i32;
-        let target = Rect::new(cursor_screen_x, cursor_screen_y, character_width, character_height);
-        render.fill_rect(target, cursor_color);
+        let cursor_target = Rect::new(cursor_screen_x, cursor_screen_y, character_width, character_height);
+        render.fill_rect(cursor_target, cursor_color);
+
+        for (line_index, line) in editor.buffer_lines.iter().enumerate() {
+            for (ch_index, ch) in line.chars().enumerate() {
+                let character_color = if line_index == editor.cursor_y as usize && ch_index == editor.cursor_x as usize {
+                    if (elapsed_ms / cursor_color_ms_interval) % 2 == 0 {
+                        background_color
+                    } else {
+                        foreground_color
+                    }
+                } else {
+                    foreground_color
+                };
+                
+                let ch_surface = cousine.get_surface_for(ch, character_color);
+
+                let target_x: i32 = (ch_index as i32)*(character_width as i32);
+                let target_y: i32 = (line_index as i32)*(character_height as i32);
+                let target = Rect::new(target_x, target_y, ch_surface.width(), ch_surface.height());
+
+
+                render.copy_surface(ch_surface, target);
+            }
+        }
+
 
         render.finish_frame();
 
