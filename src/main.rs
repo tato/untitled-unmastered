@@ -8,8 +8,11 @@ use sdl2::rect::Rect;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 
+mod buffer;
+use buffer::*;
+
 struct Editor {
-    buffer_lines: Vec<String>,
+    buffer: Buffer,
 
     cursor_x: usize,
     cursor_y: usize,
@@ -18,7 +21,7 @@ struct Editor {
 impl Default for Editor {
     fn default() -> Self {
         Self {
-            buffer_lines: vec![ String::from("") ],
+            buffer: Buffer::new(),
             cursor_x: 0,
             cursor_y: 0,
             cursor_animation_instant: Instant::now(),
@@ -27,6 +30,7 @@ impl Default for Editor {
 }
 impl Editor {
     pub fn move_cursor(&mut self, x: i32, y: i32) {
+        /* TODO(ptato) IMPLEMENT MOVING THE CURSOR
         if self.cursor_x == 0 && x < 0 {
             if self.cursor_y != 0 {
                 self.cursor_y -= 1;
@@ -48,6 +52,7 @@ impl Editor {
         if self.cursor_x >= self.buffer_lines[self.cursor_y].len() {
             self.cursor_x = self.buffer_lines[self.cursor_y].len();
         }
+        */
 
         self.cursor_animation_instant = Instant::now();
     }
@@ -72,12 +77,12 @@ fn main() {
     let background_color = Color::RGB(250, 250, 250);
 
     let mut editor: Editor = Default::default();
-    editor.buffer_lines = String::from("#include <stdio.h>
+    editor.buffer = Buffer::from("#include <stdio.h>
 
 int main(int argc, char **argv) {
     printf(\"%s\", \"Hello World!\");
     return 0;
-}").split('\n').map(String::from).collect();
+}");
 
     let window = sdl_video.window("ttttt...", character_width*characters_wide, character_height*characters_high)
         .position_centered()
@@ -101,6 +106,7 @@ int main(int argc, char **argv) {
                     break 'running;
                 },
                 Event::KeyDown { keycode: Some(Keycode::Backspace), .. } => {
+                    /* TODO(ptato) Implement BACKSPACE
                     let actual_y = min(editor.cursor_y, editor.buffer_lines.len() - 1);
 
                     let mut maybe_cursor_x = -1i32;
@@ -120,8 +126,10 @@ int main(int argc, char **argv) {
                     if maybe_cursor_x >= 0 {
                         editor.cursor_x = maybe_cursor_x as usize;
                     }
+                    */
                 },
                 Event::KeyDown { keycode: Some(Keycode::Return), .. } => {
+                    /* TODO(ptato) IMPLEMENT INSERTING A RETURN
                     let actual_y = min(editor.cursor_y, editor.buffer_lines.len() - 1);
 
                     let line = &mut editor.buffer_lines[actual_y];
@@ -132,8 +140,10 @@ int main(int argc, char **argv) {
 
                     editor.move_cursor(0, 1);
                     editor.cursor_x = 0;
+                    */
                 },
                 Event::TextInput { text, .. } => {
+                    /* TODO(ptato) IMPLEMENT INSERTING TEXT
                     if let Some(line) = editor.buffer_lines.get_mut(editor.cursor_y) {
                         let actual_x = min(editor.cursor_x, line.len());
                         let mut vec_line = line.chars().collect::<Vec<_>>();
@@ -141,6 +151,7 @@ int main(int argc, char **argv) {
                         *line = vec_line.iter().collect();
                         editor.move_cursor(text.len() as i32, 0);
                     }
+                    */
                 },
                 Event::KeyDown { keycode: Some(Keycode::Left), .. } => {
                     editor.move_cursor(-1, 0);
@@ -161,7 +172,7 @@ int main(int argc, char **argv) {
         canvas.set_draw_color(background_color);
         canvas.clear();
 
-        for (line_index, line) in editor.buffer_lines.iter().enumerate() {
+        for (line_index, line) in editor.buffer.to_string().split('\n').enumerate() {
             if line.is_empty() { continue; }
             let text_surface = cousine.render(line).blended(foreground_color).unwrap();
             let texture = texture_creator.create_texture_from_surface(&text_surface).unwrap();
