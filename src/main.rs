@@ -3,10 +3,15 @@ extern crate sdl2;
 use std::time::Instant;
 use std::cmp::min;
 use sdl2::pixels::Color;
-use sdl2::surface::Surface;
 use sdl2::rect::Rect;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
+
+mod font;
+mod render;
+
+use render::RenderContext;
+
 
 struct Editor {
     buffer_lines: Vec<String>,
@@ -47,18 +52,22 @@ impl Editor {
 
 fn main() {
     let sdl_context = sdl2::init().unwrap();
-    let sdl_video = sdl_context.video().unwrap();
     let sdl_ttf = sdl2::ttf::init().unwrap();
 
-    let cousine = sdl_ttf.load_font("./Cousine-Regular.ttf", 14).unwrap();
-    assert!(cousine.face_is_fixed_width());
+    let raw_cousine = sdl_ttf.load_font("./Cousine-Regular.ttf", 14).unwrap();
+    let mut cousine = font::Font::from(raw_cousine);
 
-    let any_character_metrics = cousine.find_glyph_metrics('A').unwrap();
-    let character_width:  u32 = any_character_metrics.advance as u32;
-    let character_height: u32 = cousine.recommended_line_spacing() as u32;
+    let mut render = RenderContext::from(sdl_context.video().unwrap());
+
+    let character_width = cousine.character_width;
+    let character_height = cousine.character_height;
 
     let characters_wide = 80u32;
     let characters_high = 30u32;
+
+    let initial_window_width = character_width*characters_wide;
+    let initial_window_height = character_height*characters_high;
+    render.set_window_dimensions(initial_window_width, initial_window_height);
 
     let foreground_color = Color::RGB(0, 0, 0);
     let background_color = Color::RGB(250, 250, 250);
@@ -71,18 +80,6 @@ int main(int argc, char **argv) {
     return 0;
 }").split('\n').map(String::from).collect();
 
-    let window = sdl_video.window("ttttt...", character_width*characters_wide, character_height*characters_high)
-        .position_centered()
-        .opengl()
-        .build()
-        .unwrap();
-
-    let mut canvas = window.into_canvas().build().unwrap();
-    let texture_creator = canvas.texture_creator();
-
-    canvas.set_draw_color(background_color);
-    canvas.clear();
-    canvas.present();
 
     let mut event_pump = sdl_context.event_pump().unwrap();
 
@@ -150,17 +147,19 @@ int main(int argc, char **argv) {
             }
         }
 
-        canvas.set_draw_color(background_color);
-        canvas.clear();
+
+        render.start_frame(background_color);
 
         for (line_index, line) in editor.buffer_lines.iter().enumerate() {
-            if line.is_empty() { continue; }
-            let text_surface = cousine.render(line).blended(foreground_color).unwrap();
-            let texture = texture_creator.create_texture_from_surface(&text_surface).unwrap();
+            for (ch_index, ch) in line.chars().enumerate() {
+                let ch_surface = cousine.get_surface_for(ch, foreground_color);
 
-            let target_y: i32 = (line_index as i32)*(character_height as i32);
-            let target = Rect::new(0, target_y, text_surface.width(), text_surface.height());
-            canvas.copy(&texture, None, Some(target)).unwrap();
+                let target_x: i32 = (ch_index as i32)*(character_width as i32);
+                let target_y: i32 = (line_index as i32)*(character_height as i32);
+                let target = Rect::new(target_x, target_y, ch_surface.width(), ch_surface.height());
+
+                render.copy_surface(ch_surface, target);
+            }
         }
 
         let cursor_color_ms_interval = 500;
@@ -171,17 +170,12 @@ int main(int argc, char **argv) {
             background_color
         };
 
-        let mut cursor_surface = Surface::new(character_width, character_height, 
-                                              canvas.default_pixel_format()).unwrap();
         let cursor_screen_x = (editor.cursor_x*character_width) as i32;
         let cursor_screen_y = (editor.cursor_y*character_height) as i32;
-        let rect = Rect::new(cursor_screen_x, cursor_screen_y, 
-                             character_width, character_height);
-        cursor_surface.fill_rect(None, cursor_color).unwrap();
-        let cursor_texture = texture_creator.create_texture_from_surface(&cursor_surface).unwrap();
-        canvas.copy(&cursor_texture, None, Some(rect)).unwrap();
+        let target = Rect::new(cursor_screen_x, cursor_screen_y, character_width, character_height);
+        render.fill_rect(target, cursor_color);
 
-        canvas.present();
+        render.finish_frame();
 
         ::std::thread::sleep(std::time::Duration::new(0, 1_000_000u32 / 30));
     }
