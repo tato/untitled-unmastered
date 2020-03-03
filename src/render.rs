@@ -9,7 +9,7 @@ pub struct RenderContext {
 impl From<sdl2::VideoSubsystem> for RenderContext {
     fn from(video: sdl2::VideoSubsystem) -> Self {
         let window = video.window("ttttt...", 10, 10)
-//            .maximized() // TODO(ptato) bugged on windows
+            .maximized()
             .position_centered()
             .opengl()
             .build()
@@ -20,9 +20,6 @@ impl From<sdl2::VideoSubsystem> for RenderContext {
     }
 }
 impl RenderContext {
-    pub fn set_window_dimensions(&mut self, width: u32, height: u32) {
-        self.canvas.window_mut().set_size(width, height).unwrap_or(());
-    }
     pub fn start_frame(&mut self, color: Color) {
         self.canvas.set_draw_color(color);
         self.canvas.clear();

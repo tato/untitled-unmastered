@@ -1,7 +1,6 @@
 extern crate sdl2;
 
 use std::time::Instant;
-use std::cmp::min;
 use sdl2::pixels::Color;
 use sdl2::rect::Rect;
 use sdl2::event::Event;
@@ -34,11 +33,13 @@ impl Default for Editor {
 }
 impl Editor {
     pub fn move_cursor(&mut self, x: i32, y: i32) {
-        /* TODO(ptato) IMPLEMENT MOVING THE CURSOR
+        let buffer_string = self.buffer.to_string();
+        let buffer_lines: Vec<&str> = buffer_string.split('\n').collect();
+
         if self.cursor_x == 0 && x < 0 {
             if self.cursor_y != 0 {
                 self.cursor_y -= 1;
-                self.cursor_x = self.buffer_lines.get(self.cursor_y).unwrap_or(&String::from("")).len();
+                self.cursor_x = buffer_lines.get(self.cursor_y).unwrap_or(&"").len();
             }
         } else {
             self.cursor_x = ((self.cursor_x as i32) + x) as usize;
@@ -50,13 +51,12 @@ impl Editor {
             self.cursor_y = ((self.cursor_y as i32) + y) as usize;
         }
 
-        if self.cursor_y >= self.buffer_lines.len() {
-            self.cursor_y = self.buffer_lines.len() - 1;
+        if self.cursor_y >= buffer_lines.len() {
+            self.cursor_y = buffer_lines.len() - 1;
         }
-        if self.cursor_x >= self.buffer_lines[self.cursor_y].len() {
-            self.cursor_x = self.buffer_lines[self.cursor_y].len();
+        if self.cursor_x >= buffer_lines[self.cursor_y].len() {
+            self.cursor_x = buffer_lines[self.cursor_y].len();
         }
-        */
 
         self.cursor_animation_instant = Instant::now();
     }
@@ -73,13 +73,6 @@ fn main() {
 
     let character_width = cousine.character_width;
     let character_height = cousine.character_height;
-
-    let characters_wide = 80u32;
-    let characters_high = 30u32;
-
-    let initial_window_width = character_width*characters_wide;
-    let initial_window_height = character_height*characters_high;
-    render.set_window_dimensions(initial_window_width, initial_window_height);
 
     let foreground_color = Color::RGB(0, 0, 0);
     let background_color = Color::RGB(250, 250, 250);
@@ -125,29 +118,22 @@ int main(int argc, char **argv) {
                     */
                 },
                 Event::KeyDown { keycode: Some(Keycode::Return), .. } => {
-                    /* TODO(ptato) IMPLEMENT INSERTING A RETURN
-                    let actual_y = min(editor.cursor_y, editor.buffer_lines.len() - 1);
-
-                    let line = &mut editor.buffer_lines[actual_y];
-                    let actual_x = min(editor.cursor_x, line.len());
-                    let new_line = line.split_off(actual_x);
-
-                    editor.buffer_lines.insert(actual_y + 1, new_line);
-
-                    editor.move_cursor(0, 1);
-                    editor.cursor_x = 0;
-                    */
+                    let buffer_string = editor.buffer.to_string();
+                    let buffer_lines: Vec<&str> = buffer_string.split('\n').collect();
+                    let pos = buffer_lines[0..editor.cursor_y]
+                        .iter()
+                        .map(|t| t.len())
+                        .sum::<usize>() + editor.cursor_x;
+                    editor.buffer.insert("\n", pos);
                 },
                 Event::TextInput { text, .. } => {
-                    /* TODO(ptato) IMPLEMENT INSERTING TEXT
-                    if let Some(line) = editor.buffer_lines.get_mut(editor.cursor_y) {
-                        let actual_x = min(editor.cursor_x, line.len());
-                        let mut vec_line = line.chars().collect::<Vec<_>>();
-                        vec_line.splice(actual_x..actual_x, text.chars().collect::<Vec<char>>());
-                        *line = vec_line.iter().collect();
-                        editor.move_cursor(text.len() as i32, 0);
-                    }
-                    */
+                    let buffer_string = editor.buffer.to_string();
+                    let buffer_lines: Vec<&str> = buffer_string.split('\n').collect();
+                    let pos = buffer_lines[0..editor.cursor_y]
+                        .iter()
+                        .map(|t| t.len())
+                        .sum::<usize>() + editor.cursor_x;
+                    editor.buffer.insert(&text, pos);
                 },
                 Event::KeyDown { keycode: Some(Keycode::Left), .. } => {
                     editor.move_cursor(-1, 0);
