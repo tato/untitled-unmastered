@@ -25,12 +25,13 @@ impl<'sdlttf, 'rwops, 'a> From<ttf::Font<'sdlttf, 'rwops>> for Font<'sdlttf, 'rw
 }
 impl Font<'_, '_, '_> {
     pub fn get_surface_for(&mut self, c: char, color: Color) -> &Surface {
-        if !self.cache.contains_key(&(c,color)) {
+        use std::collections::hash_map::Entry;
+        if let Entry::Vacant(entry) = self.cache.entry((c,color)) {
             let ch_surface = self.source
                 .render(&c.to_string())
                 .blended(color)
                 .unwrap(); // TODO(ptato) .unwrap_or_default()
-            self.cache.insert((c,color), ch_surface);
+            entry.insert(ch_surface);
         }
         &self.cache[&(c,color)]
     }

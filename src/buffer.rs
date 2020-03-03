@@ -50,7 +50,7 @@ impl Buffer {
                 ORIGINAL => &self.original,
                 APPEND => &self.append,
             };
-            result += from[piece.start..piece.start+piece.length].into_iter().collect::<String>().as_str();
+            result += from[piece.start..piece.start+piece.length].iter().collect::<String>().as_str();
         }
         result
     }
