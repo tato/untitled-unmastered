@@ -1,0 +1,12 @@
+= uu
+a personal + experimental text editor by Pablo Tato Ramos
+
+== GOALS
+  * compiles down to a single executable file
+  * GUI-first
+  * fast, even on big files
+  * vim-like
+  * portable
+
+== NON-GOALS
+  * configurable
