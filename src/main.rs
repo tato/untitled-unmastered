@@ -134,6 +134,7 @@ int main(int argc, char **argv) {
                         .map(|t| t.len())
                         .sum::<usize>() + editor.cursor_x;
                     editor.buffer.insert(&text, pos);
+                    editor.move_cursor(1, 0);
                 },
                 Event::KeyDown { keycode: Some(Keycode::Left), .. } => {
                     editor.move_cursor(-1, 0);
