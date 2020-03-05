@@ -138,7 +138,6 @@ impl Buffer {
                 break;
             }
         }
-        unreachable!("unreachable: invalid insert :(");
     }
 
     pub fn to_string(&self) -> String {

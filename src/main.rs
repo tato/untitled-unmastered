@@ -113,6 +113,7 @@ int main(int argc, char **argv) {
                         .sum::<usize>() + editor.cursor_x;
                     editor.buffer.insert("\n", pos);
                     editor.move_cursor(0, 1);
+                    editor.cursor_x = 0;
                 },
                 Event::TextInput { text, .. } => {
                     let buffer_string = editor.buffer.to_string();
