@@ -60,6 +60,15 @@ impl Editor {
 
         self.cursor_animation_instant = Instant::now();
     }
+    pub fn cursor_position_in_buffer(&self) -> usize {
+        let buffer_string = self.buffer.to_string();
+        let pos = buffer_string
+            .split('\n')
+            .take(self.cursor_y)
+            .map(|t| t.len() + 1)
+            .sum::<usize>() + self.cursor_x;
+        return pos;
+    }
 }
 
 fn main() {
@@ -78,12 +87,7 @@ fn main() {
     let background_color = Color::RGB(250, 250, 250);
 
     let mut editor: Editor = Default::default();
-    editor.buffer = Buffer::from("#include <stdio.h>
-
-int main(int argc, char **argv) {
-    printf(\"%s\", \"Hello World!\");
-    return 0;
-}");
+    editor.buffer = Buffer::from(include_str!("main.rs"));
 
 
     let mut event_pump = sdl_context.event_pump().unwrap();
@@ -95,33 +99,18 @@ int main(int argc, char **argv) {
                     break 'running;
                 },
                 Event::KeyDown { keycode: Some(Keycode::Backspace), .. } => {
-                    let buffer_string = editor.buffer.to_string();
-                    let buffer_lines: Vec<&str> = buffer_string.split('\n').collect();
-                    let pos = buffer_lines[0..editor.cursor_y]
-                        .iter()
-                        .map(|t| t.len() + 1)
-                        .sum::<usize>() + editor.cursor_x;
+                    let pos = editor.cursor_position_in_buffer();
                     editor.buffer.remove(pos);
                     editor.move_cursor(-1, 0);
                 },
                 Event::KeyDown { keycode: Some(Keycode::Return), .. } => {
-                    let buffer_string = editor.buffer.to_string();
-                    let buffer_lines: Vec<&str> = buffer_string.split('\n').collect();
-                    let pos = buffer_lines[0..editor.cursor_y]
-                        .iter()
-                        .map(|t| t.len() + 1)
-                        .sum::<usize>() + editor.cursor_x;
+                    let pos = editor.cursor_position_in_buffer();
                     editor.buffer.insert("\n", pos);
                     editor.move_cursor(0, 1);
                     editor.cursor_x = 0;
                 },
                 Event::TextInput { text, .. } => {
-                    let buffer_string = editor.buffer.to_string();
-                    let buffer_lines: Vec<&str> = buffer_string.split('\n').collect();
-                    let pos = buffer_lines[0..editor.cursor_y]
-                        .iter()
-                        .map(|t| t.len() + 1)
-                        .sum::<usize>() + editor.cursor_x;
+                    let pos = editor.cursor_position_in_buffer();
                     editor.buffer.insert(&text, pos);
                     editor.move_cursor(1, 0);
                 },
