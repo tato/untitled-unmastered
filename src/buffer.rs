@@ -41,6 +41,49 @@ impl Buffer {
             pieces,
         }
     }
+
+    pub fn remove(&mut self, remove_position: usize) {
+        let mut search_position = 0;
+        let mut cursor = self.pieces.cursor();
+        while let Some(piece) = cursor.next() {
+            let piece_position_start = search_position;
+            search_position += piece.length;
+            let piece_position_end = search_position;
+
+            if search_position >= remove_position {
+                let piece_start = piece.start;
+                let piece_source = piece.source;
+
+                cursor.prev();
+                cursor.remove();
+
+                if remove_position != piece_position_end - 1 {
+                    let after = Piece{
+                        start: piece_start + remove_position - piece_position_start,
+                        length: piece_position_end - remove_position,
+                        source: piece_source,
+                    };
+                    if after.length > 0 {
+                        cursor.insert(after);
+                    }
+                }
+
+                if remove_position != piece_position_start {
+                    let before = Piece {
+                        start: piece_start,
+                        length: remove_position - piece_position_start - 1,
+                        source: piece_source,
+                    };
+                    if before.length > 0 {
+                        cursor.insert(before);
+                    }
+                }
+
+                break;
+            }
+        }
+    }
+
     pub fn insert(&mut self, text: &str, insert_position: usize) {
         let start = self.append.len();
         for c in text.chars() {
@@ -95,6 +138,7 @@ impl Buffer {
                 break;
             }
         }
+        assert!(false, "unreachable: invalid insert :(");
     }
 
     pub fn to_string(&mut self) -> String {

@@ -95,27 +95,14 @@ int main(int argc, char **argv) {
                     break 'running;
                 },
                 Event::KeyDown { keycode: Some(Keycode::Backspace), .. } => {
-                    /* TODO(ptato) Implement BACKSPACE
-                    let actual_y = min(editor.cursor_y, editor.buffer_lines.len() - 1);
-
-                    let mut maybe_cursor_x = -1i32;
-
-                    let bl = &mut editor.buffer_lines;
-                    let actual_x = min(editor.cursor_x, bl[actual_y].len());
-                    if actual_x == 0 {
-                        let deleted_line = bl.remove(actual_y);
-                        if let Some(prev_line) = bl.get_mut(actual_y - 1) {
-                            maybe_cursor_x = prev_line.len() as i32;
-                            prev_line.push_str(&deleted_line);
-                        }
-                    } else {
-                        bl[actual_y].remove(actual_x);
-                    }
+                    let buffer_string = editor.buffer.to_string();
+                    let buffer_lines: Vec<&str> = buffer_string.split('\n').collect();
+                    let pos = buffer_lines[0..editor.cursor_y]
+                        .iter()
+                        .map(|t| t.len() + 1)
+                        .sum::<usize>() + editor.cursor_x;
+                    editor.buffer.remove(pos);
                     editor.move_cursor(-1, 0);
-                    if maybe_cursor_x >= 0 {
-                        editor.cursor_x = maybe_cursor_x as usize;
-                    }
-                    */
                 },
                 Event::KeyDown { keycode: Some(Keycode::Return), .. } => {
                     let buffer_string = editor.buffer.to_string();
@@ -125,6 +112,7 @@ int main(int argc, char **argv) {
                         .map(|t| t.len() + 1)
                         .sum::<usize>() + editor.cursor_x;
                     editor.buffer.insert("\n", pos);
+                    editor.move_cursor(0, 1);
                 },
                 Event::TextInput { text, .. } => {
                     let buffer_string = editor.buffer.to_string();
