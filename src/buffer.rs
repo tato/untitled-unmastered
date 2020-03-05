@@ -97,15 +97,6 @@ impl Buffer {
         }
     }
 
-    pub fn debug_print_pieces(&mut self)  {
-        let cursor = &mut self.pieces.cursor();
-        println!("++++++++++++++++++++++++++++++++++++++++++++++");
-        while let Some(piece) = cursor.next() {
-            println!("{:?}", piece);
-        }
-        println!("----------------------------------------------");
-    }
-
     pub fn to_string(&mut self) -> String {
         let mut result = String::new();
         let mut cursor = self.pieces.cursor();

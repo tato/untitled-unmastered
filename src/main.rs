@@ -122,7 +122,7 @@ int main(int argc, char **argv) {
                     let buffer_lines: Vec<&str> = buffer_string.split('\n').collect();
                     let pos = buffer_lines[0..editor.cursor_y]
                         .iter()
-                        .map(|t| t.len())
+                        .map(|t| t.len() + 1)
                         .sum::<usize>() + editor.cursor_x;
                     editor.buffer.insert("\n", pos);
                 },
@@ -131,7 +131,7 @@ int main(int argc, char **argv) {
                     let buffer_lines: Vec<&str> = buffer_string.split('\n').collect();
                     let pos = buffer_lines[0..editor.cursor_y]
                         .iter()
-                        .map(|t| t.len())
+                        .map(|t| t.len() + 1)
                         .sum::<usize>() + editor.cursor_x;
                     editor.buffer.insert(&text, pos);
                     editor.move_cursor(1, 0);
