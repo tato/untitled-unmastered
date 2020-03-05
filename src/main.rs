@@ -4,7 +4,6 @@ use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
 use sdl2::rect::Rect;
-use std::convert::TryInto;
 use std::time::Instant;
 
 mod buffer;
@@ -157,22 +156,21 @@ fn main() {
         let _window_width_in_characters = render.width() / character_width;
         let window_height_in_characters = render.height() / character_height;
 
-        let status_line_y = ((window_height_in_characters - 2) * character_height)
-            .try_into()
-            .unwrap_or(std::i32::MAX);
+        let status_line_y = 
+            ((window_height_in_characters - 2) * character_height) as i32;
         let status_line_rect = Rect::new(
             0, status_line_y, 
             render.width(), character_height
         );
         render.fill_rect(status_line_rect, foreground_color);
 
-        for (ci_usize, c) in "status 8)".chars().enumerate() {
-            let ci: i32 = ci_usize.try_into().unwrap_or(std::i32::MAX);
-            let cw: i32 = character_width.try_into().unwrap_or(std::i32::MAX);
+        for (ci_usize, c) in " > status 8)".chars().enumerate() {
+            let ci: i32 = ci_usize as i32;
+            let cw: i32 = character_width as i32;
 
             let surface = cousine.get_surface_for(c, background_color);
-            let target_x: i32 = ci * cw;
-            let target_y: i32 = status_line_y;
+            let target_x = ci * cw;
+            let target_y = status_line_y;
             let target = Rect::new(
                 target_x, target_y,
                 surface.width(), surface.height()
@@ -185,11 +183,8 @@ fn main() {
             .buffer
             .to_string()
             .split('\n')
-            .take(
-                (window_height_in_characters - 2)
-                    .try_into()
-                    .unwrap_or(std::usize::MAX),
-            )
+            .skip(0)
+            .take((window_height_in_characters - 2) as usize)
             .enumerate()
         {
             for (ch_index, ch) in line.chars().enumerate() {
