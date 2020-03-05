@@ -28,8 +28,8 @@ impl Buffer {
         }
     }
     pub fn from(source: &str) -> Self {
-        let first_piece = Piece{ 
-            start: 0, 
+        let first_piece = Piece {
+            start: 0,
             length: source.len(),
             source: ORIGINAL,
         };
@@ -58,7 +58,7 @@ impl Buffer {
                 cursor.remove();
 
                 if remove_position != piece_position_end - 1 {
-                    let after = Piece{
+                    let after = Piece {
                         start: piece_start + remove_position - piece_position_start,
                         length: piece_position_end - remove_position,
                         source: piece_source,
@@ -90,15 +90,16 @@ impl Buffer {
             self.append.push(c);
         }
         if self.pieces.is_empty() {
-            self.pieces.push_back(Piece{
-                start, length: text.len(), source: APPEND,
+            self.pieces.push_back(Piece {
+                start,
+                length: text.len(),
+                source: APPEND,
             });
         }
 
         let mut search_position = 0;
         let mut cursor = self.pieces.cursor();
         while let Some(piece) = cursor.next() {
-
             let piece_position_start = search_position;
             search_position += piece.length;
             let piece_position_end = search_position;
@@ -109,9 +110,9 @@ impl Buffer {
 
                 cursor.prev();
                 cursor.remove();
-                
+
                 if insert_position != piece_position_end - 1 {
-                    let after = Piece{
+                    let after = Piece {
                         start: piece_start + insert_position - piece_position_start,
                         length: piece_position_end - insert_position,
                         source: piece_source,
@@ -121,7 +122,7 @@ impl Buffer {
                     }
                 }
 
-                let new = Piece{ 
+                let new = Piece {
                     start,
                     length: text.len(),
                     source: APPEND,
@@ -152,7 +153,10 @@ impl Buffer {
                 ORIGINAL => &self.original,
                 APPEND => &self.append,
             };
-            result += from[piece.start..piece.start+piece.length].iter().collect::<String>().as_str();
+            result += from[piece.start..piece.start + piece.length]
+                .iter()
+                .collect::<String>()
+                .as_str();
         }
         result
     }

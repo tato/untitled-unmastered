@@ -1,11 +1,11 @@
 extern crate sdl2;
 
-use std::convert::TryInto;
-use std::time::Instant;
-use sdl2::pixels::Color;
-use sdl2::rect::Rect;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
+use sdl2::pixels::Color;
+use sdl2::rect::Rect;
+use std::convert::TryInto;
+use std::time::Instant;
 
 mod buffer;
 mod font;
@@ -13,7 +13,6 @@ mod render;
 
 use buffer::*;
 use render::RenderContext;
-
 
 struct Editor {
     buffer: Buffer,
@@ -63,11 +62,12 @@ impl Editor {
     }
     pub fn cursor_position_in_buffer(&self) -> usize {
         let buffer_string = self.buffer.to_string();
-        self.cursor_x + buffer_string
-            .split('\n')
-            .take(self.cursor_y)
-            .map(|t| t.len() + 1)
-            .sum::<usize>()
+        self.cursor_x
+            + buffer_string
+                .split('\n')
+                .take(self.cursor_y)
+                .map(|t| t.len() + 1)
+                .sum::<usize>()
     }
 }
 
@@ -89,49 +89,54 @@ fn main() {
     let mut editor: Editor = Default::default();
     editor.buffer = Buffer::from(include_str!("main.rs"));
 
-
     let mut event_pump = sdl_context.event_pump().unwrap();
 
     'running: loop {
         for event in event_pump.poll_iter() {
             match event {
-                Event::Quit {..} | Event::KeyDown { keycode: Some(Keycode::Escape), ..} => {
+                Event::Quit { .. } => {
                     break 'running;
-                },
-                Event::KeyDown { keycode: Some(Keycode::Backspace), .. } => {
+                }
+                Event::KeyDown { keycode: Some(Keycode::Escape), ..  } => {
+                    break 'running;
+                }
+
+                Event::KeyDown { keycode: Some(Keycode::Backspace), ..  } => {
                     let pos = editor.cursor_position_in_buffer();
                     editor.buffer.remove(pos);
                     editor.move_cursor(-1, 0);
-                },
-                Event::KeyDown { keycode: Some(Keycode::Return), .. } => {
+                }
+
+                Event::KeyDown { keycode: Some(Keycode::Return), ..  } => {
                     let pos = editor.cursor_position_in_buffer();
                     editor.buffer.insert("\n", pos);
                     editor.move_cursor(0, 1);
                     editor.cursor_x = 0;
-                },
+                }
+
                 Event::TextInput { text, .. } => {
                     let pos = editor.cursor_position_in_buffer();
                     editor.buffer.insert(&text, pos);
                     editor.move_cursor(1, 0);
-                },
-                Event::KeyDown { keycode: Some(Keycode::Left), .. } => {
+                }
+
+                Event::KeyDown { keycode: Some(Keycode::Left), ..  } => {
                     editor.move_cursor(-1, 0);
-                },
-                Event::KeyDown { keycode: Some(Keycode::Right), .. } => {
+                }
+                Event::KeyDown { keycode: Some(Keycode::Right), ..  } => {
                     editor.move_cursor(1, 0);
-                },
-                Event::KeyDown { keycode: Some(Keycode::Up), .. } => {
+                }
+                Event::KeyDown { keycode: Some(Keycode::Up), ..  } => {
                     editor.move_cursor(0, -1);
-                },
-                Event::KeyDown { keycode: Some(Keycode::Down), .. } => {
+                }
+                Event::KeyDown { keycode: Some(Keycode::Down), ..  } => {
                     editor.move_cursor(0, 1);
-                },
-                _ => { }
+                }
+                _ => {}
             }
         }
 
         render.start_frame(background_color);
-
 
         let cursor_color_ms_interval = 500;
         let elapsed_ms = editor.cursor_animation_instant.elapsed().as_millis();
@@ -141,35 +146,56 @@ fn main() {
             background_color
         };
 
-        let cursor_screen_x = ((editor.cursor_x as u32)*character_width) as i32;
-        let cursor_screen_y = ((editor.cursor_y as u32)*character_height) as i32;
-        let cursor_target = Rect::new(cursor_screen_x, cursor_screen_y, character_width, character_height);
+        let cursor_screen_x = ((editor.cursor_x as u32) * character_width) as i32;
+        let cursor_screen_y = ((editor.cursor_y as u32) * character_height) as i32;
+        let cursor_target = Rect::new(
+            cursor_screen_x, cursor_screen_y,
+            character_width, character_height,
+        );
         render.fill_rect(cursor_target, cursor_color);
 
         let _window_width_in_characters = render.width() / character_width;
         let window_height_in_characters = render.height() / character_height;
 
-        let status_line_y = ((window_height_in_characters-2)*character_height).try_into().unwrap_or(std::i32::MAX);
+        let status_line_y = ((window_height_in_characters - 2) * character_height)
+            .try_into()
+            .unwrap_or(std::i32::MAX);
         let status_line_rect = Rect::new(
-            0, status_line_y,
-            render.width(), character_height);
+            0, status_line_y, 
+            render.width(), character_height
+        );
         render.fill_rect(status_line_rect, foreground_color);
 
         for (ci_usize, c) in "status 8)".chars().enumerate() {
-            let ci: i32 = ci_usize.try_into().unwrap_or(0);
-            let cw: i32 = character_width.try_into().unwrap_or(0);
+            let ci: i32 = ci_usize.try_into().unwrap_or(std::i32::MAX);
+            let cw: i32 = character_width.try_into().unwrap_or(std::i32::MAX);
 
             let surface = cousine.get_surface_for(c, background_color);
             let target_x: i32 = ci * cw;
             let target_y: i32 = status_line_y;
-            let target = Rect::new(target_x, target_y, surface.width(), surface.height());
+            let target = Rect::new(
+                target_x, target_y,
+                surface.width(), surface.height()
+            );
 
             render.copy_surface(surface, target);
         }
 
-        for (line_index, line) in editor.buffer.to_string().split('\n').take((window_height_in_characters-2).try_into().unwrap_or(std::usize::MAX)).enumerate() {
+        for (line_index, line) in editor
+            .buffer
+            .to_string()
+            .split('\n')
+            .take(
+                (window_height_in_characters - 2)
+                    .try_into()
+                    .unwrap_or(std::usize::MAX),
+            )
+            .enumerate()
+        {
             for (ch_index, ch) in line.chars().enumerate() {
-                let character_color = if line_index == editor.cursor_y as usize && ch_index == editor.cursor_x as usize {
+                let character_color = if line_index == editor.cursor_y as usize
+                    && ch_index == editor.cursor_x as usize
+                {
                     if (elapsed_ms / cursor_color_ms_interval) % 2 == 0 {
                         background_color
                     } else {
@@ -178,18 +204,19 @@ fn main() {
                 } else {
                     foreground_color
                 };
-                
+
                 let ch_surface = cousine.get_surface_for(ch, character_color);
 
-                let target_x: i32 = (ch_index as i32)*(character_width as i32);
-                let target_y: i32 = (line_index as i32)*(character_height as i32);
-                let target = Rect::new(target_x, target_y, ch_surface.width(), ch_surface.height());
-
+                let target_x: i32 = (ch_index as i32) * (character_width as i32);
+                let target_y: i32 = (line_index as i32) * (character_height as i32);
+                let target = Rect::new(
+                    target_x, target_y,
+                    ch_surface.width(), ch_surface.height()
+                );
 
                 render.copy_surface(ch_surface, target);
             }
         }
-
 
         render.finish_frame();
 
