@@ -20,6 +20,12 @@ impl From<sdl2::VideoSubsystem> for RenderContext {
     }
 }
 impl RenderContext {
+    pub fn width(&self) -> u32 {
+        self.canvas.window().size().0
+    }
+    pub fn height(&self) -> u32 {
+        self.canvas.window().size().1
+    }
     pub fn start_frame(&mut self, color: Color) {
         self.canvas.set_draw_color(color);
         self.canvas.clear();

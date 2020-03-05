@@ -1,5 +1,6 @@
 extern crate sdl2;
 
+use std::convert::TryInto;
 use std::time::Instant;
 use sdl2::pixels::Color;
 use sdl2::rect::Rect;
@@ -145,7 +146,28 @@ fn main() {
         let cursor_target = Rect::new(cursor_screen_x, cursor_screen_y, character_width, character_height);
         render.fill_rect(cursor_target, cursor_color);
 
-        for (line_index, line) in editor.buffer.to_string().split('\n').enumerate() {
+        let _window_width_in_characters = render.width() / character_width;
+        let window_height_in_characters = render.height() / character_height;
+
+        let status_line_y = ((window_height_in_characters-2)*character_height).try_into().unwrap_or(std::i32::MAX);
+        let status_line_rect = Rect::new(
+            0, status_line_y,
+            render.width(), character_height);
+        render.fill_rect(status_line_rect, foreground_color);
+
+        for (ci_usize, c) in "status 8)".chars().enumerate() {
+            let ci: i32 = ci_usize.try_into().unwrap_or(0);
+            let cw: i32 = character_width.try_into().unwrap_or(0);
+
+            let surface = cousine.get_surface_for(c, background_color);
+            let target_x: i32 = ci * cw;
+            let target_y: i32 = status_line_y;
+            let target = Rect::new(target_x, target_y, surface.width(), surface.height());
+
+            render.copy_surface(surface, target);
+        }
+
+        for (line_index, line) in editor.buffer.to_string().split('\n').take((window_height_in_characters-2).try_into().unwrap_or(std::usize::MAX)).enumerate() {
             for (ch_index, ch) in line.chars().enumerate() {
                 let character_color = if line_index == editor.cursor_y as usize && ch_index == editor.cursor_x as usize {
                     if (elapsed_ms / cursor_color_ms_interval) % 2 == 0 {
