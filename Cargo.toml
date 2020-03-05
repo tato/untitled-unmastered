@@ -9,3 +9,6 @@ edition = "2018"
 git = "https://github.com/Rust-SDL2/rust-sdl2.git"
 default-features = false
 features = [ "bundled", "ttf" ]
+
+[dependencies.linked-list]
+git = "https://github.com/contain-rs/linked-list"
