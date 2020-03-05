@@ -117,7 +117,7 @@ impl Buffer {
                 }
 
                 let new = Piece{ 
-                    start: start,
+                    start,
                     length: text.len(),
                     source: APPEND,
                 };
@@ -138,13 +138,12 @@ impl Buffer {
                 break;
             }
         }
-        assert!(false, "unreachable: invalid insert :(");
+        unreachable!("unreachable: invalid insert :(");
     }
 
-    pub fn to_string(&mut self) -> String {
+    pub fn to_string(&self) -> String {
         let mut result = String::new();
-        let mut cursor = self.pieces.cursor();
-        while let Some(piece) = cursor.next() {
+        for piece in &self.pieces {
             let from = match &piece.source {
                 ORIGINAL => &self.original,
                 APPEND => &self.append,
