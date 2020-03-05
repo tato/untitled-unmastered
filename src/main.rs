@@ -62,12 +62,11 @@ impl Editor {
     }
     pub fn cursor_position_in_buffer(&self) -> usize {
         let buffer_string = self.buffer.to_string();
-        let pos = buffer_string
+        self.cursor_x + buffer_string
             .split('\n')
             .take(self.cursor_y)
             .map(|t| t.len() + 1)
-            .sum::<usize>() + self.cursor_x;
-        return pos;
+            .sum::<usize>()
     }
 }
 

@@ -89,6 +89,11 @@ impl Buffer {
         for c in text.chars() {
             self.append.push(c);
         }
+        if self.pieces.is_empty() {
+            self.pieces.push_back(Piece{
+                start, length: text.len(), source: APPEND,
+            });
+        }
 
         let mut search_position = 0;
         let mut cursor = self.pieces.cursor();
