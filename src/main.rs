@@ -66,7 +66,7 @@ fn main() {
     let sdl_context = sdl2::init().unwrap();
     let sdl_ttf = sdl2::ttf::init().unwrap();
 
-    let raw_cousine = sdl_ttf.load_font("./Cousine-Regular.ttf", 14).unwrap();
+    let raw_cousine = sdl_ttf.load_font("./Cousine-Regular.ttf", 18).unwrap();
     let mut cousine = font::Font::from(raw_cousine);
 
     let mut render = RenderContext::from(sdl_context.video().unwrap());
