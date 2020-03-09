@@ -68,28 +68,31 @@ impl<'a> RenderContext<'a> {
     pub fn finish_frame(&mut self) {
         self.canvas.present();
     }
-    pub fn fill_rect(&mut self, area: Rect, color: Color) {
-        // TODO(ptato) avoid failing? return Result?
+    pub fn fill_rect(&mut self, area: Rect, color: Color) -> Result<(), String> {
         let mut surface = Surface::new(
             area.w as u32,
             area.h as u32,
             self.canvas.default_pixel_format(),
-        ).unwrap();
-        surface.fill_rect(None, color).unwrap();
+        )?;
+        surface.fill_rect(None, color)?;
         let texture = self
             .texture_creator
             .create_texture_from_surface(&surface)
-            .unwrap();
-        self.canvas.copy(&texture, None, Some(area)).unwrap();
+            .map_err(|e| e.to_string())?;
+        self.canvas.copy(&texture, None, Some(area))?;
+
+        Ok(())
     }
 
-    pub fn draw_character(&mut self, c: char, color: Color, x: i32, y: i32) {
+    pub fn draw_character(&mut self, c: char, color: Color, x: i32, y: i32) 
+        -> Result<(), String>
+    {
         // TODO(ptato) avoid failing? return Result?
         if let Entry::Vacant(entry) = self.cache.entry((c, color)) {
             let surface = self.font
                 .render(&c.to_string())
                 .blended(color)
-                .unwrap(); // TODO(ptato) .unwrap_or_default()
+                .map_err(|e| e.to_string())?;
             entry.insert(surface);
         }
         let surface = &self.cache[&(c, color)];
@@ -97,7 +100,9 @@ impl<'a> RenderContext<'a> {
         let texture = self
             .texture_creator
             .create_texture_from_surface(&surface)
-            .unwrap();
-        self.canvas.copy(&texture, None, Some(target)).unwrap();
+            .map_err(|e| e.to_string())?;
+        self.canvas.copy(&texture, None, Some(target))?;
+
+        Ok(())
     }
 }
