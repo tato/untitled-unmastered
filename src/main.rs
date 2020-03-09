@@ -158,7 +158,7 @@ fn main() {
         };
 
         let cursor_screen_x = ((editor.cursor_x as u32) * character_width) as i32;
-        let cursor_screen_y = ((editor.cursor_y as u32) * character_height) as i32;
+        let cursor_screen_y = (((editor.cursor_y - editor.y_render_offset) as u32) * character_height) as i32;
         let cursor_target = Rect::new(
             cursor_screen_x, cursor_screen_y,
             character_width, character_height,
