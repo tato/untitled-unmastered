@@ -1,27 +1,26 @@
 use sdl2::pixels::Color;
 use sdl2::rect::Rect;
 use sdl2::surface::Surface;
+use sdl2::ttf;
 use std::collections::HashMap;
 use std::collections::hash_map::Entry;
-
 
 pub struct RenderContext<'sdlttf> {
     canvas: sdl2::render::WindowCanvas,
     texture_creator: sdl2::render::TextureCreator<sdl2::video::WindowContext>,
-    ttf: sdl2::ttf::Sdl2TtfContext,
+    // ttf_context: &'sdlttf ttf::Sdl2TtfContext,
 
-    font: sdl2::ttf::Font<'sdlttf, 'static>,
+    font: ttf::Font<'sdlttf, 'static>,
     pub character_width: u32,
     pub character_height: u32,
 
     cache: HashMap<(char, Color), Surface<'sdlttf>>,
 }
-impl From<&sdl2::Sdl> for RenderContext<'_> {
-    fn from(sdl: &sdl2::Sdl) -> Self {
-        let video = sdl.video().unwrap();
-        let ttf = sdl2::ttf::init().unwrap();
+impl<'a> RenderContext<'a> {
+    pub fn new(video_context: &sdl2::VideoSubsystem,
+               ttf_context: &'a ttf::Sdl2TtfContext) -> Self {
 
-        let window = video
+        let window = video_context
             .window("ttttt...", 10, 10)
             .maximized()
             .position_centered()
@@ -31,7 +30,7 @@ impl From<&sdl2::Sdl> for RenderContext<'_> {
         let canvas = window.into_canvas().build().unwrap();
         let texture_creator = canvas.texture_creator();
 
-        let font = ttf.load_font("./Cousine-Regular.ttf", 18).unwrap();
+        let font = ttf_context.load_font("./Cousine-Regular.ttf", 18).unwrap();
         let any_character_metrics = font.find_glyph_metrics('A').unwrap();
         let character_width = any_character_metrics.advance as u32;
         let character_height = font.recommended_line_spacing() as u32;
@@ -39,15 +38,13 @@ impl From<&sdl2::Sdl> for RenderContext<'_> {
         Self {
             canvas,
             texture_creator,
-            ttf,
+            // ttf_context,
             font,
             character_width,
             character_height,
             cache: HashMap::new(),
         }
     }
-}
-impl RenderContext<'_> {
     pub fn width(&self) -> u32 {
         self.canvas.window().size().0
     }

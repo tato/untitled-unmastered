@@ -87,7 +87,9 @@ impl Editor {
 
 fn main() {
     let sdl_context = sdl2::init().unwrap();
-    let mut render = RenderContext::from(&sdl_context);
+    let video_context = sdl_context.video().unwrap();
+    let ttf_context = sdl2::ttf::init().unwrap();
+    let mut render = RenderContext::new(&video_context, &ttf_context);
 
     let character_width = render.character_width;
     let character_height = render.character_height;
