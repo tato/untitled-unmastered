@@ -167,7 +167,7 @@ fn main() {
             cursor_screen_x, cursor_screen_y,
             character_width, character_height,
         );
-        render.fill_rect(cursor_target, cursor_color).unwrap();
+        render.fill_rect(cursor_target, cursor_color).unwrap_or(());
 
         let _window_width_in_characters = render.width() / character_width;
         let window_height_in_characters = render.height() / character_height;
@@ -178,7 +178,7 @@ fn main() {
             0, status_line_y, 
             render.width(), character_height
         );
-        render.fill_rect(status_line_rect, foreground_color).unwrap();
+        render.fill_rect(status_line_rect, foreground_color).unwrap_or(());
 
         for (ci_usize, c) in " > status 8)".chars().enumerate() {
             let ci: i32 = ci_usize as i32;
@@ -188,7 +188,7 @@ fn main() {
             let target_y = status_line_y;
             render
                 .draw_character(c, background_color, target_x, target_y)
-                .unwrap();
+                .unwrap_or(());
         }
 
         for (line_index, line) in editor
@@ -216,7 +216,7 @@ fn main() {
                 let target_y: i32 = (line_index as i32) * (character_height as i32);
                 render
                     .draw_character(ch, character_color, target_x, target_y)
-                    .unwrap();
+                    .unwrap_or(());
             }
         }
 

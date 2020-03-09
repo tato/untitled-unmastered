@@ -87,7 +87,6 @@ impl<'a> RenderContext<'a> {
     pub fn draw_character(&mut self, c: char, color: Color, x: i32, y: i32) 
         -> Result<(), String>
     {
-        // TODO(ptato) avoid failing? return Result?
         if let Entry::Vacant(entry) = self.cache.entry((c, color)) {
             let surface = self.font
                 .render(&c.to_string())
