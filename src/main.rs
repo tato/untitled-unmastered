@@ -12,6 +12,7 @@ mod render;
 
 use buffer::*;
 use render::RenderContext;
+use uu::panic_with_dialog;
 
 struct Editor {
     buffer: Buffer,
@@ -33,7 +34,6 @@ impl Default for Editor {
     }
 }
 impl Editor {
-    // TODO(ptato) Clean up arguments to this method
     pub fn move_cursor(&mut self, render: &RenderContext, x: i32, y: i32) {
         let buffer_string = self.buffer.to_string();
         let buffer_lines: Vec<&str> = buffer_string.split('\n').collect();
@@ -88,9 +88,9 @@ impl Editor {
 }
 
 fn main() {
-    let sdl_context = sdl2::init().unwrap();
-    let video_context = sdl_context.video().unwrap();
-    let ttf_context = sdl2::ttf::init().unwrap();
+    let sdl_context = sdl2::init().unwrap_or_else(panic_with_dialog);
+    let video_context = sdl_context.video().unwrap_or_else(panic_with_dialog);
+    let ttf_context = sdl2::ttf::init().unwrap_or_else(panic_with_dialog);
     let mut render = RenderContext::new(&video_context, &ttf_context);
 
     let character_width = render.character_width;
@@ -102,7 +102,9 @@ fn main() {
     let mut editor: Editor = Default::default();
     editor.buffer = Buffer::from(include_str!("main.rs"));
 
-    let mut event_pump = sdl_context.event_pump().unwrap();
+    let mut event_pump = sdl_context
+        .event_pump()
+        .unwrap_or_else(panic_with_dialog);
 
     'running: loop {
         for event in event_pump.poll_iter() {

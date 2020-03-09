@@ -4,6 +4,7 @@ use sdl2::surface::Surface;
 use sdl2::ttf;
 use std::collections::HashMap;
 use std::collections::hash_map::Entry;
+use uu::panic_with_dialog;
 
 pub struct RenderContext<'sdlttf> {
     canvas: sdl2::render::WindowCanvas,
@@ -26,12 +27,19 @@ impl<'a> RenderContext<'a> {
             .position_centered()
             .opengl()
             .build()
-            .unwrap();
-        let canvas = window.into_canvas().build().unwrap();
+            .unwrap_or_else(panic_with_dialog);
+
+        let canvas = window
+            .into_canvas()
+            .build()
+            .unwrap_or_else(panic_with_dialog);
         let texture_creator = canvas.texture_creator();
 
         let font = ttf_context.load_font("./Cousine-Regular.ttf", 18).unwrap();
-        let any_character_metrics = font.find_glyph_metrics('A').unwrap();
+        let any_character_metrics = font
+            .find_glyph_metrics('A')
+            .ok_or("character 'A' was not found in font") // 🤪
+            .unwrap_or_else(panic_with_dialog);
         let character_width = any_character_metrics.advance as u32;
         let character_height = font.recommended_line_spacing() as u32;
 
@@ -59,12 +67,12 @@ impl<'a> RenderContext<'a> {
         self.canvas.present();
     }
     pub fn fill_rect(&mut self, area: Rect, color: Color) {
+        // TODO(ptato) avoid failing? return Result?
         let mut surface = Surface::new(
             area.w as u32,
             area.h as u32,
             self.canvas.default_pixel_format(),
-        )
-        .unwrap();
+        ).unwrap();
         surface.fill_rect(None, color).unwrap();
         let texture = self
             .texture_creator
@@ -74,6 +82,7 @@ impl<'a> RenderContext<'a> {
     }
 
     pub fn draw_character(&mut self, c: char, color: Color, x: i32, y: i32) {
+        // TODO(ptato) avoid failing? return Result?
         if let Entry::Vacant(entry) = self.cache.entry((c, color)) {
             let surface = self.font
                 .render(&c.to_string())
