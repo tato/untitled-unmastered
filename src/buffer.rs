@@ -86,13 +86,16 @@ impl Buffer {
 
     pub fn insert(&mut self, text: &str, insert_position: usize) {
         let start = self.append.len();
+        let mut length = 0;
         for c in text.chars() {
             self.append.push(c);
+            length += 1;
         }
+
         if self.pieces.is_empty() {
             self.pieces.push_back(Piece {
                 start,
-                length: text.len(),
+                length,
                 source: APPEND,
             });
         }
@@ -124,7 +127,7 @@ impl Buffer {
 
                 let new = Piece {
                     start,
-                    length: text.len(),
+                    length,
                     source: APPEND,
                 };
                 if new.length > 0 {

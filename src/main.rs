@@ -5,7 +5,7 @@ use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
 use sdl2::rect::Rect;
 use std::time::Instant;
-use std::cmp::{min,max};
+use std::cmp::min;
 
 mod buffer;
 mod render;
@@ -68,9 +68,11 @@ impl Editor {
             self.y_render_offset += y as usize;
         }
         if y < 0 && self.cursor_y < self.y_render_offset + 5 {
-            self.y_render_offset += y as usize;
+            if (self.y_render_offset as i32) + y >= 0 {
+                self.y_render_offset -= (-y) as usize;
+            }
         }
-        self.y_render_offset = min(max(0, self.y_render_offset), buffer_lines.len());
+        self.y_render_offset = min(self.y_render_offset, buffer_lines.len());
 
         self.cursor_animation_instant = Instant::now();
     }
