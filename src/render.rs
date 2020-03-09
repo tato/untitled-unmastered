@@ -1,7 +1,7 @@
 use sdl2::pixels::Color;
 use sdl2::rect::Rect;
 use sdl2::surface::Surface;
-use sdl2::ttf;
+use sdl2::*;
 use std::collections::HashMap;
 use std::collections::hash_map::Entry;
 use uu::panic_with_dialog;
@@ -22,7 +22,7 @@ impl<'a> RenderContext<'a> {
                ttf_context: &'a ttf::Sdl2TtfContext) -> Self {
 
         let window = video_context
-            .window("ttttt...", 10, 10)
+            .window("uu", 10, 10)
             .maximized()
             .position_centered()
             .opengl()
@@ -35,7 +35,9 @@ impl<'a> RenderContext<'a> {
             .unwrap_or_else(panic_with_dialog);
         let texture_creator = canvas.texture_creator();
 
-        let font = ttf_context.load_font("./Cousine-Regular.ttf", 18).unwrap();
+        let rwops = rwops::RWops::from_bytes(
+            include_bytes!("./Cousine-Regular.ttf")).unwrap();
+        let font = ttf_context.load_font_from_rwops(rwops, 18).unwrap();
         let any_character_metrics = font
             .find_glyph_metrics('A')
             .ok_or("character 'A' was not found in font") // 🤪
