@@ -5,6 +5,7 @@ use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
 use sdl2::rect::Rect;
 use std::time::Instant;
+use std::cmp::{min,max};
 
 mod buffer;
 mod font;
@@ -15,6 +16,7 @@ use render::RenderContext;
 
 struct Editor {
     buffer: Buffer,
+    y_render_offset: usize,
 
     cursor_x: usize,
     cursor_y: usize,
@@ -24,6 +26,7 @@ impl Default for Editor {
     fn default() -> Self {
         Self {
             buffer: Buffer::new(),
+            y_render_offset: 0,
             cursor_x: 0,
             cursor_y: 0,
             cursor_animation_instant: Instant::now(),
@@ -31,7 +34,8 @@ impl Default for Editor {
     }
 }
 impl Editor {
-    pub fn move_cursor(&mut self, x: i32, y: i32) {
+    // TODO(ptato) Clean up arguments to this method
+    pub fn move_cursor(&mut self, render: &RenderContext, ch: u32, x: i32, y: i32) {
         let buffer_string = self.buffer.to_string();
         let buffer_lines: Vec<&str> = buffer_string.split('\n').collect();
 
@@ -56,6 +60,17 @@ impl Editor {
         if self.cursor_x >= buffer_lines[self.cursor_y].len() {
             self.cursor_x = buffer_lines[self.cursor_y].len();
         }
+
+        let window_height_in_characters = (render.height() / ch) as usize;
+        if y > 0 &&
+            self.cursor_y > self.y_render_offset + window_height_in_characters - 7 
+        {
+            self.y_render_offset += y as usize;
+        }
+        if y < 0 && self.cursor_y < self.y_render_offset + 5 {
+            self.y_render_offset += y as usize;
+        }
+        self.y_render_offset = min(max(0, self.y_render_offset), buffer_lines.len());
 
         self.cursor_animation_instant = Instant::now();
     }
@@ -103,33 +118,33 @@ fn main() {
                 Event::KeyDown { keycode: Some(Keycode::Backspace), ..  } => {
                     let pos = editor.cursor_position_in_buffer();
                     editor.buffer.remove(pos);
-                    editor.move_cursor(-1, 0);
+                    editor.move_cursor(&render, character_height, -1, 0);
                 }
 
                 Event::KeyDown { keycode: Some(Keycode::Return), ..  } => {
                     let pos = editor.cursor_position_in_buffer();
                     editor.buffer.insert("\n", pos);
-                    editor.move_cursor(0, 1);
+                    editor.move_cursor(&render, character_height, 0, 1);
                     editor.cursor_x = 0;
                 }
 
                 Event::TextInput { text, .. } => {
                     let pos = editor.cursor_position_in_buffer();
                     editor.buffer.insert(&text, pos);
-                    editor.move_cursor(1, 0);
+                    editor.move_cursor(&render, character_height, 1, 0);
                 }
 
                 Event::KeyDown { keycode: Some(Keycode::Left), ..  } => {
-                    editor.move_cursor(-1, 0);
+                    editor.move_cursor(&render, character_height, -1, 0);
                 }
                 Event::KeyDown { keycode: Some(Keycode::Right), ..  } => {
-                    editor.move_cursor(1, 0);
+                    editor.move_cursor(&render, character_height, 1, 0);
                 }
                 Event::KeyDown { keycode: Some(Keycode::Up), ..  } => {
-                    editor.move_cursor(0, -1);
+                    editor.move_cursor(&render, character_height, 0, -1);
                 }
                 Event::KeyDown { keycode: Some(Keycode::Down), ..  } => {
-                    editor.move_cursor(0, 1);
+                    editor.move_cursor(&render, character_height, 0, 1);
                 }
                 _ => {}
             }
@@ -173,7 +188,7 @@ fn main() {
             let target_y = status_line_y;
             let target = Rect::new(
                 target_x, target_y,
-                surface.width(), surface.height()
+                surface.width(), surface.height(),
             );
 
             render.copy_surface(surface, target);
@@ -183,7 +198,7 @@ fn main() {
             .buffer
             .to_string()
             .split('\n')
-            .skip(0)
+            .skip(editor.y_render_offset)
             .take((window_height_in_characters - 2) as usize)
             .enumerate()
         {
