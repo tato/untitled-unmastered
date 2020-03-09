@@ -8,7 +8,6 @@ use std::time::Instant;
 use std::cmp::{min,max};
 
 mod buffer;
-mod font;
 mod render;
 
 use buffer::*;
@@ -35,7 +34,7 @@ impl Default for Editor {
 }
 impl Editor {
     // TODO(ptato) Clean up arguments to this method
-    pub fn move_cursor(&mut self, render: &RenderContext, ch: u32, x: i32, y: i32) {
+    pub fn move_cursor(&mut self, render: &RenderContext, x: i32, y: i32) {
         let buffer_string = self.buffer.to_string();
         let buffer_lines: Vec<&str> = buffer_string.split('\n').collect();
 
@@ -61,6 +60,7 @@ impl Editor {
             self.cursor_x = buffer_lines[self.cursor_y].len();
         }
 
+        let ch = render.character_height;
         let window_height_in_characters = (render.height() / ch) as usize;
         if y > 0 &&
             self.cursor_y > self.y_render_offset + window_height_in_characters - 7 
@@ -87,15 +87,10 @@ impl Editor {
 
 fn main() {
     let sdl_context = sdl2::init().unwrap();
-    let sdl_ttf = sdl2::ttf::init().unwrap();
+    let mut render = RenderContext::from(&sdl_context);
 
-    let raw_cousine = sdl_ttf.load_font("./Cousine-Regular.ttf", 18).unwrap();
-    let mut cousine = font::Font::from(raw_cousine);
-
-    let mut render = RenderContext::from(sdl_context.video().unwrap());
-
-    let character_width = cousine.character_width;
-    let character_height = cousine.character_height;
+    let character_width = render.character_width;
+    let character_height = render.character_height;
 
     let foreground_color = Color::RGB(0, 0, 0);
     let background_color = Color::RGB(250, 250, 250);
@@ -118,33 +113,33 @@ fn main() {
                 Event::KeyDown { keycode: Some(Keycode::Backspace), ..  } => {
                     let pos = editor.cursor_position_in_buffer();
                     editor.buffer.remove(pos);
-                    editor.move_cursor(&render, character_height, -1, 0);
+                    editor.move_cursor(&render, -1, 0);
                 }
 
                 Event::KeyDown { keycode: Some(Keycode::Return), ..  } => {
                     let pos = editor.cursor_position_in_buffer();
                     editor.buffer.insert("\n", pos);
-                    editor.move_cursor(&render, character_height, 0, 1);
+                    editor.move_cursor(&render, 0, 1);
                     editor.cursor_x = 0;
                 }
 
                 Event::TextInput { text, .. } => {
                     let pos = editor.cursor_position_in_buffer();
                     editor.buffer.insert(&text, pos);
-                    editor.move_cursor(&render, character_height, 1, 0);
+                    editor.move_cursor(&render, 1, 0);
                 }
 
                 Event::KeyDown { keycode: Some(Keycode::Left), ..  } => {
-                    editor.move_cursor(&render, character_height, -1, 0);
+                    editor.move_cursor(&render, -1, 0);
                 }
                 Event::KeyDown { keycode: Some(Keycode::Right), ..  } => {
-                    editor.move_cursor(&render, character_height, 1, 0);
+                    editor.move_cursor(&render, 1, 0);
                 }
                 Event::KeyDown { keycode: Some(Keycode::Up), ..  } => {
-                    editor.move_cursor(&render, character_height, 0, -1);
+                    editor.move_cursor(&render, 0, -1);
                 }
                 Event::KeyDown { keycode: Some(Keycode::Down), ..  } => {
-                    editor.move_cursor(&render, character_height, 0, 1);
+                    editor.move_cursor(&render, 0, 1);
                 }
                 _ => {}
             }
@@ -183,15 +178,9 @@ fn main() {
             let ci: i32 = ci_usize as i32;
             let cw: i32 = character_width as i32;
 
-            let surface = cousine.get_surface_for(c, background_color);
             let target_x = ci * cw;
             let target_y = status_line_y;
-            let target = Rect::new(
-                target_x, target_y,
-                surface.width(), surface.height(),
-            );
-
-            render.copy_surface(surface, target);
+            render.draw_character(c, background_color, target_x, target_y);
         }
 
         for (line_index, line) in editor
@@ -215,16 +204,9 @@ fn main() {
                     foreground_color
                 };
 
-                let ch_surface = cousine.get_surface_for(ch, character_color);
-
                 let target_x: i32 = (ch_index as i32) * (character_width as i32);
                 let target_y: i32 = (line_index as i32) * (character_height as i32);
-                let target = Rect::new(
-                    target_x, target_y,
-                    ch_surface.width(), ch_surface.height()
-                );
-
-                render.copy_surface(ch_surface, target);
+                render.draw_character(ch, character_color, target_x, target_y);
             }
         }
 
