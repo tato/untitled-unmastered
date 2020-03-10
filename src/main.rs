@@ -8,7 +8,7 @@ use sdl2::rect::Rect;
 use std::time::Instant;
 use std::cmp::min;
 
-pub fn panic_with_dialog<T>(m: impl std::fmt::Display) -> T {
+pub fn panic_with_dialog<Any>(m: impl std::fmt::Display) -> Any {
     sdl2::messagebox::show_simple_message_box(
         sdl2::messagebox::MessageBoxFlag::ERROR, 
         "uu error", &m.to_string(), None).expect(&m.to_string());
