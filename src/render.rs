@@ -4,7 +4,7 @@ use sdl2::surface::Surface;
 use sdl2::*;
 use std::collections::HashMap;
 use std::collections::hash_map::Entry;
-use uu::panic_with_dialog;
+use crate::*;
 
 pub struct RenderContext<'sdlttf> {
     canvas: sdl2::render::WindowCanvas,
