@@ -82,7 +82,7 @@ impl Editor {
             + buffer_string
                 .split('\n')
                 .take(self.cursor_y)
-                .map(|t| t.len() + 1)
+                .map(|t| t.chars().count() + 1)
                 .sum::<usize>()
     }
 }
