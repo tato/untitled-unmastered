@@ -1,6 +1,7 @@
 use crate::*;
 use crate::render::RenderContext;
 use sdl2::keyboard::Keycode;
+use unicode_segmentation::UnicodeSegmentation;
 
 pub enum Mode {
     NORMAL,
@@ -84,7 +85,7 @@ impl Editor {
             + buffer_string
                 .split('\n')
                 .take(self.cursor_y)
-                .map(|t| t.chars().count() + 1)
+                .map(|t| UnicodeSegmentation::graphemes(t, true).count() + 1)
                 .sum::<usize>()
     }
 

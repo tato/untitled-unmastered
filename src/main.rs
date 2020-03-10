@@ -1,10 +1,12 @@
 extern crate sdl2;
 extern crate nfd;
+extern crate unicode_segmentation;
 
 use sdl2::*;
 use sdl2::event::Event;
 use sdl2::pixels::Color;
 use sdl2::rect::Rect;
+use unicode_segmentation::UnicodeSegmentation;
 use std::time::Instant;
 use std::cmp::min;
 
@@ -94,7 +96,9 @@ fn main() {
         let status_text = format!(" {} > {} <",
                                   editor.cursor_y,
                                   editor.editing_file_path);
-        for (ci_usize, c) in status_text.chars().enumerate() {
+
+        let gi = UnicodeSegmentation::grapheme_indices(status_text.as_str(), true);
+        for (ci_usize, c) in gi {
             let ci: i32 = ci_usize as i32;
             let cw: i32 = character_width as i32;
 
@@ -113,7 +117,8 @@ fn main() {
             .take((window_height_in_characters - 2) as usize)
             .enumerate()
         {
-            for (ch_index, ch) in line.chars().enumerate() {
+            let gi = UnicodeSegmentation::grapheme_indices(line, true);
+            for (ch_index, c) in gi {
                 let character_color = if line_index == editor.cursor_y as usize
                     && ch_index == editor.cursor_x as usize
                 {
@@ -129,7 +134,7 @@ fn main() {
                 let target_x: i32 = (ch_index as i32) * (character_width as i32);
                 let target_y: i32 = (line_index as i32) * (character_height as i32);
                 render
-                    .draw_character(ch, character_color, target_x, target_y)
+                    .draw_character(c, character_color, target_x, target_y)
                     .unwrap_or(());
             }
         }

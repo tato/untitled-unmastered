@@ -15,7 +15,7 @@ pub struct RenderContext<'sdlttf> {
     pub character_width: u32,
     pub character_height: u32,
 
-    cache: HashMap<(char, Color), Surface<'sdlttf>>,
+    cache: HashMap<(String, Color), Surface<'sdlttf>>,
 }
 impl<'a> RenderContext<'a> {
     pub fn new(video_context: &sdl2::VideoSubsystem,
@@ -84,17 +84,17 @@ impl<'a> RenderContext<'a> {
         Ok(())
     }
 
-    pub fn draw_character(&mut self, c: char, color: Color, x: i32, y: i32) 
+    pub fn draw_character(&mut self, c: &str, color: Color, x: i32, y: i32) 
         -> Result<(), String>
     {
-        if let Entry::Vacant(entry) = self.cache.entry((c, color)) {
+        if let Entry::Vacant(entry) = self.cache.entry((c.to_string(), color)) {
             let surface = self.font
-                .render(&c.to_string())
+                .render(c)
                 .blended(color)
                 .map_err(|e| e.to_string())?;
             entry.insert(surface);
         }
-        let surface = &self.cache[&(c, color)];
+        let surface = &self.cache[&(c.to_string(), color)];
         let target = Rect::new(x, y, surface.width(), surface.height());
         let texture = self
             .texture_creator

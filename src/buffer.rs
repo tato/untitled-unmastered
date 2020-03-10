@@ -1,5 +1,6 @@
 extern crate linked_list;
 use linked_list::LinkedList;
+use crate::*;
 
 #[derive(Copy, Clone, Debug)]
 enum PieceSource {
@@ -13,8 +14,8 @@ struct Piece {
     source: PieceSource,
 }
 pub struct Buffer {
-    original: Vec<char>,
-    append: Vec<char>,
+    original: Vec<u8>,
+    append: Vec<u8>,
     pieces: LinkedList<Piece>,
 }
 
@@ -36,7 +37,7 @@ impl Buffer {
         let mut pieces = LinkedList::new();
         pieces.push_back(first_piece);
         Self {
-            original: source.chars().collect(),
+            original: source.to_string().into_bytes(),
             append: Vec::new(),
             pieces,
         }
@@ -87,7 +88,7 @@ impl Buffer {
     pub fn insert(&mut self, text: &str, insert_position: usize) {
         let start = self.append.len();
         let mut length = 0;
-        for c in text.chars() {
+        for c in text.bytes() {
             self.append.push(c);
             length += 1;
         }
@@ -156,10 +157,8 @@ impl Buffer {
                 ORIGINAL => &self.original,
                 APPEND => &self.append,
             };
-            result += from[piece.start..piece.start + piece.length]
-                .iter()
-                .collect::<String>()
-                .as_str();
+            let sl = &from[piece.start..piece.start + piece.length];
+            result += std::str::from_utf8(sl).unwrap_or_else(panic_with_dialog);
         }
         result
     }
