@@ -167,6 +167,17 @@ fn main() {
                         }
                     }
                 }
+
+                Event::KeyDown { keycode: Some(Keycode::S), keymod, .. } => {
+                    if (keymod.contains(keyboard::Mod::LCTRLMOD)
+                        || keymod.contains(keyboard::Mod::RCTRLMOD))
+                        && !editor.editing_file_path.is_empty()
+                    {
+                        std::fs::write(
+                            &editor.editing_file_path,
+                            editor.buffer.to_string()).unwrap_or(());
+                    }
+                }
                 _ => {}
             }
         }
@@ -200,7 +211,10 @@ fn main() {
         );
         render.fill_rect(status_line_rect, foreground_color).unwrap_or(());
 
-        for (ci_usize, c) in " > status 8)".chars().enumerate() {
+        let status_text = format!(" {} > {} <",
+                                  editor.cursor_y,
+                                  editor.editing_file_path);
+        for (ci_usize, c) in status_text.chars().enumerate() {
             let ci: i32 = ci_usize as i32;
             let cw: i32 = character_width as i32;
 
