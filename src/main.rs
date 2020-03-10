@@ -81,10 +81,10 @@ impl Editor {
         {
             self.y_render_offset += y as usize;
         }
-        if y < 0 && self.cursor_y < self.y_render_offset + 5 {
-            if (self.y_render_offset as i32) + y >= 0 {
-                self.y_render_offset -= (-y) as usize;
-            }
+        if y < 0 && self.cursor_y < self.y_render_offset + 5
+            && (self.y_render_offset as i32) + y >= 0
+        {
+            self.y_render_offset -= (-y) as usize;
         }
         self.y_render_offset = min(self.y_render_offset, buffer_lines.len());
 
@@ -108,8 +108,15 @@ impl Editor {
         }
     }
 
-    fn handle_keys_in_normal_mode(&mut self, render: &RenderContext, keycode: keyboard::Keycode, ctrl: bool) {
-        todo!();
+    fn handle_keys_in_normal_mode(&mut self, render: &RenderContext, keycode: keyboard::Keycode, _ctrl: bool) {
+        match keycode {
+            Keycode::I => self.mode = Mode::INSERT,
+            Keycode::H => self.move_cursor(render, -1, 0),
+            Keycode::L => self.move_cursor(render, 1, 0),
+            Keycode::K => self.move_cursor(render, 0, -1),
+            Keycode::J => self.move_cursor(render, 0, 1),
+            _ => {},
+        }
     }
     fn handle_keys_in_insert_mode(&mut self, render: &RenderContext, keycode: keyboard::Keycode, ctrl: bool) {
         match keycode {
@@ -135,7 +142,7 @@ impl Editor {
                 if let nfd::Response::Okay(file_path) = result {
                     self.editing_file_path = file_path.clone();
                     let t = std::fs::read_to_string(file_path)
-                        .unwrap_or("".to_string());
+                        .unwrap_or_else(|_| "".to_string());
                     self.buffer = buffer::Buffer::from(&t);
                 }
             },
@@ -147,6 +154,7 @@ impl Editor {
                 }
 
             },
+            Keycode::Escape => self.mode = Mode::NORMAL,
             _ => {},
         }
     }
@@ -177,18 +185,17 @@ fn main() {
                 Event::Quit { .. } => {
                     break 'running;
                 }
-                Event::KeyDown { keycode: Some(Keycode::Escape), ..  } => {
-                    break 'running;
-                }
                 Event::KeyDown { keycode: Some(keycode), keymod, .. } => {
                     let ctrl = keymod.contains(keyboard::Mod::LCTRLMOD)
                         || keymod.contains(keyboard::Mod::RCTRLMOD);
                     editor.handle_keys(&render, keycode, ctrl);
                 }
                 Event::TextInput { text, .. } => {
-                    let pos = editor.cursor_position_in_buffer();
-                    editor.buffer.insert(&text, pos);
-                    editor.move_cursor(&render, 1, 0);
+                    if let Mode::INSERT = editor.mode {
+                        let pos = editor.cursor_position_in_buffer();
+                        editor.buffer.insert(&text, pos);
+                        editor.move_cursor(&render, 1, 0);
+                    }
                 }
 
                 _ => {}
