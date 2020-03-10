@@ -1,9 +1,11 @@
 extern crate sdl2;
+extern crate nfd;
 
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
 use sdl2::rect::Rect;
+use sdl2::*;
 use std::time::Instant;
 use std::cmp::min;
 
@@ -18,6 +20,8 @@ struct Editor {
     buffer: Buffer,
     y_render_offset: usize,
 
+    editing_file_path: String,
+
     cursor_x: usize,
     cursor_y: usize,
     cursor_animation_instant: Instant,
@@ -27,6 +31,9 @@ impl Default for Editor {
         Self {
             buffer: Buffer::new(),
             y_render_offset: 0,
+
+            editing_file_path: String::from(""),
+
             cursor_x: 0,
             cursor_y: 0,
             cursor_animation_instant: Instant::now(),
@@ -146,6 +153,19 @@ fn main() {
                 }
                 Event::KeyDown { keycode: Some(Keycode::Down), ..  } => {
                     editor.move_cursor(&render, 0, 1);
+                }
+
+                Event::KeyDown { keycode: Some(Keycode::O), keymod, .. } => {
+                    if keymod.contains(keyboard::Mod::LCTRLMOD)
+                        || keymod.contains(keyboard::Mod::RCTRLMOD)
+                    {
+                        let result = nfd::open_file_dialog(None, None).unwrap_or_else(panic_with_dialog);
+                        if let nfd::Response::Okay(file_path) = result {
+                            editor.editing_file_path = file_path.clone();
+                            let t = std::fs::read_to_string(file_path).unwrap_or("".to_string());
+                            editor.buffer = buffer::Buffer::from(&t);
+                        }
+                    }
                 }
                 _ => {}
             }
