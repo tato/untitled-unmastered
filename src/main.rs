@@ -112,49 +112,42 @@ impl Editor {
         todo!();
     }
     fn handle_keys_in_insert_mode(&mut self, render: &RenderContext, keycode: keyboard::Keycode, ctrl: bool) {
-        if keycode == Keycode::Backspace {
-            let pos = self.cursor_position_in_buffer();
-            self.buffer.remove(pos);
-            self.move_cursor(render, -1, 0);
-        }
-        if keycode == Keycode::Return {
-            let pos = self.cursor_position_in_buffer();
-            self.buffer.insert("\n", pos);
-            self.move_cursor(render, 0, 1);
-            self.cursor_x = 0;
-        }
+        match keycode {
+            Keycode::Backspace => {
+                let pos = self.cursor_position_in_buffer();
+                self.buffer.remove(pos);
+                self.move_cursor(render, -1, 0);
+            },
+            Keycode::Return => {
+                let pos = self.cursor_position_in_buffer();
+                self.buffer.insert("\n", pos);
+                self.move_cursor(render, 0, 1);
+                self.cursor_x = 0;
+            },
+            Keycode::Left => self.move_cursor(render, -1, 0),
+            Keycode::Right => self.move_cursor(render, 1, 0),
+            Keycode::Up => self.move_cursor(render, 0, -1),
+            Keycode::Down => self.move_cursor(render, 0, 1),
+            Keycode::O if ctrl => {
+                let result = nfd::open_file_dialog(None, None)
+                    .unwrap_or_else(panic_with_dialog);
 
-        if keycode == Keycode::Left {
-            self.move_cursor(render, -1, 0);
-        }
-        if keycode == Keycode::Right {
-            self.move_cursor(render, 1, 0);
-        }
-        if keycode == Keycode::Up {
-            self.move_cursor(render, 0, -1);
-        }
-        if keycode == Keycode::Down {
-            self.move_cursor(render, 0, 1);
-        }
+                if let nfd::Response::Okay(file_path) = result {
+                    self.editing_file_path = file_path.clone();
+                    let t = std::fs::read_to_string(file_path)
+                        .unwrap_or("".to_string());
+                    self.buffer = buffer::Buffer::from(&t);
+                }
+            },
+            Keycode::S if ctrl => {
+                if !self.editing_file_path.is_empty() {
+                    std::fs::write(
+                        &self.editing_file_path,
+                        self.buffer.to_string()).unwrap_or(());
+                }
 
-        if ctrl && keycode == Keycode::O {
-            let result = nfd::open_file_dialog(None, None)
-                .unwrap_or_else(panic_with_dialog);
-
-            if let nfd::Response::Okay(file_path) = result {
-                self.editing_file_path = file_path.clone();
-                let t = std::fs::read_to_string(file_path)
-                    .unwrap_or("".to_string());
-                self.buffer = buffer::Buffer::from(&t);
-            }
-        }
-
-        if ctrl && keycode == Keycode::S {
-            if !self.editing_file_path.is_empty() {
-                std::fs::write(
-                    &self.editing_file_path,
-                    self.buffer.to_string()).unwrap_or(());
-            }
+            },
+            _ => {},
         }
     }
 }
