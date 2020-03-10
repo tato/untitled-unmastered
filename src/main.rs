@@ -16,7 +16,14 @@ use buffer::*;
 use render::RenderContext;
 use uu::panic_with_dialog;
 
+enum Mode {
+    NORMAL,
+    INSERT,
+}
+
 struct Editor {
+    mode: Mode, 
+
     buffer: Buffer,
     y_render_offset: usize,
 
@@ -26,9 +33,11 @@ struct Editor {
     cursor_y: usize,
     cursor_animation_instant: Instant,
 }
-impl Default for Editor {
-    fn default() -> Self {
+impl Editor {
+    pub fn new() -> Self {
         Self {
+            mode: Mode::INSERT,
+
             buffer: Buffer::new(),
             y_render_offset: 0,
 
@@ -39,8 +48,6 @@ impl Default for Editor {
             cursor_animation_instant: Instant::now(),
         }
     }
-}
-impl Editor {
     pub fn move_cursor(&mut self, render: &RenderContext, x: i32, y: i32) {
         let buffer_string = self.buffer.to_string();
         let buffer_lines: Vec<&str> = buffer_string.split('\n').collect();
@@ -83,6 +90,7 @@ impl Editor {
 
         self.cursor_animation_instant = Instant::now();
     }
+
     pub fn cursor_position_in_buffer(&self) -> usize {
         let buffer_string = self.buffer.to_string();
         self.cursor_x
@@ -91,6 +99,63 @@ impl Editor {
                 .take(self.cursor_y)
                 .map(|t| t.chars().count() + 1)
                 .sum::<usize>()
+    }
+
+    pub fn handle_keys(&mut self, render: &RenderContext, keycode: keyboard::Keycode, ctrl: bool) {
+        match self.mode {
+            Mode::NORMAL => self.handle_keys_in_normal_mode(render, keycode, ctrl),
+            Mode::INSERT => self.handle_keys_in_insert_mode(render, keycode, ctrl),
+        }
+    }
+
+    fn handle_keys_in_normal_mode(&mut self, render: &RenderContext, keycode: keyboard::Keycode, ctrl: bool) {
+        todo!();
+    }
+    fn handle_keys_in_insert_mode(&mut self, render: &RenderContext, keycode: keyboard::Keycode, ctrl: bool) {
+        if keycode == Keycode::Backspace {
+            let pos = self.cursor_position_in_buffer();
+            self.buffer.remove(pos);
+            self.move_cursor(render, -1, 0);
+        }
+        if keycode == Keycode::Return {
+            let pos = self.cursor_position_in_buffer();
+            self.buffer.insert("\n", pos);
+            self.move_cursor(render, 0, 1);
+            self.cursor_x = 0;
+        }
+
+        if keycode == Keycode::Left {
+            self.move_cursor(render, -1, 0);
+        }
+        if keycode == Keycode::Right {
+            self.move_cursor(render, 1, 0);
+        }
+        if keycode == Keycode::Up {
+            self.move_cursor(render, 0, -1);
+        }
+        if keycode == Keycode::Down {
+            self.move_cursor(render, 0, 1);
+        }
+
+        if ctrl && keycode == Keycode::O {
+            let result = nfd::open_file_dialog(None, None)
+                .unwrap_or_else(panic_with_dialog);
+
+            if let nfd::Response::Okay(file_path) = result {
+                self.editing_file_path = file_path.clone();
+                let t = std::fs::read_to_string(file_path)
+                    .unwrap_or("".to_string());
+                self.buffer = buffer::Buffer::from(&t);
+            }
+        }
+
+        if ctrl && keycode == Keycode::S {
+            if !self.editing_file_path.is_empty() {
+                std::fs::write(
+                    &self.editing_file_path,
+                    self.buffer.to_string()).unwrap_or(());
+            }
+        }
     }
 }
 
@@ -106,7 +171,7 @@ fn main() {
     let foreground_color = Color::RGB(0, 0, 0);
     let background_color = Color::RGB(250, 250, 250);
 
-    let mut editor: Editor = Default::default();
+    let mut editor = Editor::new();
     editor.buffer = Buffer::from(include_str!("main.rs"));
 
     let mut event_pump = sdl_context
@@ -122,62 +187,17 @@ fn main() {
                 Event::KeyDown { keycode: Some(Keycode::Escape), ..  } => {
                     break 'running;
                 }
-
-                Event::KeyDown { keycode: Some(Keycode::Backspace), ..  } => {
-                    let pos = editor.cursor_position_in_buffer();
-                    editor.buffer.remove(pos);
-                    editor.move_cursor(&render, -1, 0);
+                Event::KeyDown { keycode: Some(keycode), keymod, .. } => {
+                    let ctrl = keymod.contains(keyboard::Mod::LCTRLMOD)
+                        || keymod.contains(keyboard::Mod::RCTRLMOD);
+                    editor.handle_keys(&render, keycode, ctrl);
                 }
-
-                Event::KeyDown { keycode: Some(Keycode::Return), ..  } => {
-                    let pos = editor.cursor_position_in_buffer();
-                    editor.buffer.insert("\n", pos);
-                    editor.move_cursor(&render, 0, 1);
-                    editor.cursor_x = 0;
-                }
-
                 Event::TextInput { text, .. } => {
                     let pos = editor.cursor_position_in_buffer();
                     editor.buffer.insert(&text, pos);
                     editor.move_cursor(&render, 1, 0);
                 }
 
-                Event::KeyDown { keycode: Some(Keycode::Left), ..  } => {
-                    editor.move_cursor(&render, -1, 0);
-                }
-                Event::KeyDown { keycode: Some(Keycode::Right), ..  } => {
-                    editor.move_cursor(&render, 1, 0);
-                }
-                Event::KeyDown { keycode: Some(Keycode::Up), ..  } => {
-                    editor.move_cursor(&render, 0, -1);
-                }
-                Event::KeyDown { keycode: Some(Keycode::Down), ..  } => {
-                    editor.move_cursor(&render, 0, 1);
-                }
-
-                Event::KeyDown { keycode: Some(Keycode::O), keymod, .. } => {
-                    if keymod.contains(keyboard::Mod::LCTRLMOD)
-                        || keymod.contains(keyboard::Mod::RCTRLMOD)
-                    {
-                        let result = nfd::open_file_dialog(None, None).unwrap_or_else(panic_with_dialog);
-                        if let nfd::Response::Okay(file_path) = result {
-                            editor.editing_file_path = file_path.clone();
-                            let t = std::fs::read_to_string(file_path).unwrap_or("".to_string());
-                            editor.buffer = buffer::Buffer::from(&t);
-                        }
-                    }
-                }
-
-                Event::KeyDown { keycode: Some(Keycode::S), keymod, .. } => {
-                    if (keymod.contains(keyboard::Mod::LCTRLMOD)
-                        || keymod.contains(keyboard::Mod::RCTRLMOD))
-                        && !editor.editing_file_path.is_empty()
-                    {
-                        std::fs::write(
-                            &editor.editing_file_path,
-                            editor.buffer.to_string()).unwrap_or(());
-                    }
-                }
                 _ => {}
             }
         }
