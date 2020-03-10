@@ -10,6 +10,11 @@ use unicode_segmentation::UnicodeSegmentation;
 use std::time::Instant;
 use std::cmp::min;
 
+pub fn print_and_return<T>(v: T) -> T where T: std::fmt::Debug {
+    println!("{:?}", v);
+    v
+}
+
 pub fn panic_with_dialog<Any>(m: impl std::fmt::Display) -> Any {
     sdl2::messagebox::show_simple_message_box(
         sdl2::messagebox::MessageBoxFlag::ERROR, 
@@ -97,8 +102,8 @@ fn main() {
                                   editor.cursor_y,
                                   editor.editing_file_path);
 
-        let gi = UnicodeSegmentation::grapheme_indices(status_text.as_str(), true);
-        for (ci_usize, c) in gi {
+        let gcs = UnicodeSegmentation::graphemes(status_text.as_str(), true);
+        for (ci_usize, c) in gcs.enumerate() {
             let ci: i32 = ci_usize as i32;
             let cw: i32 = character_width as i32;
 
@@ -117,8 +122,8 @@ fn main() {
             .take((window_height_in_characters - 2) as usize)
             .enumerate()
         {
-            let gi = UnicodeSegmentation::grapheme_indices(line, true);
-            for (ch_index, c) in gi {
+            let gcs = UnicodeSegmentation::graphemes(line, true);
+            for (ch_index, c) in gcs.enumerate() {
                 let character_color = if line_index == editor.cursor_y as usize
                     && ch_index == editor.cursor_x as usize
                 {

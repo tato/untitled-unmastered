@@ -81,12 +81,20 @@ impl Editor {
 
     pub fn cursor_position_in_buffer(&self) -> usize {
         let buffer_string = self.buffer.to_string();
-        self.cursor_x
-            + buffer_string
-                .split('\n')
-                .take(self.cursor_y)
-                .map(|t| UnicodeSegmentation::graphemes(t, true).count() + 1)
-                .sum::<usize>()
+        let buffer_lines: Vec<&str> = buffer_string
+            .split('\n')
+            .take(self.cursor_y + 1)
+            .collect();
+        let length_before_line = buffer_lines[0..self.cursor_y]
+            .iter()
+            .map(|t| t.len() + 1)
+            .sum::<usize>();
+        let length_inside_line = UnicodeSegmentation::
+            graphemes(buffer_lines[self.cursor_y], true)
+            .take(self.cursor_x)
+            .map(|gc| gc.len())
+            .sum::<usize>();
+        print_and_return(length_before_line + length_inside_line)
     }
 
     pub fn handle_keys(&mut self, render: &RenderContext, keycode: Keycode, ctrl: bool) {
@@ -110,8 +118,10 @@ impl Editor {
         match keycode {
             Keycode::Backspace => {
                 let pos = self.cursor_position_in_buffer();
-                self.buffer.remove(pos);
-                self.move_cursor(render, -1, 0);
+                if pos > 0 {
+                    self.buffer.remove(pos - 1);
+                    self.move_cursor(render, -1, 0);
+                }
             },
             Keycode::Return => {
                 let pos = self.cursor_position_in_buffer();

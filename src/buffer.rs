@@ -55,12 +55,25 @@ impl Buffer {
                 let piece_start = piece.start;
                 let piece_source = piece.source;
 
+                let from = match &piece.source {
+                    ORIGINAL => &self.original,
+                    APPEND => &self.append,
+                };
+
                 cursor.prev();
                 cursor.remove();
 
                 if remove_position != piece_position_end - 1 {
+                    let s = std::str::
+                        from_utf8(&from[piece_start + remove_position..])
+                        .unwrap_or_else(panic_with_dialog);
+                    let len = print_and_return(UnicodeSegmentation::graphemes(s, true)
+                        .next()
+                        .unwrap_or_else(|| panic_with_dialog("wtf!")))
+                        .len();
+
                     let after = Piece {
-                        start: piece_start + remove_position - piece_position_start,
+                        start: piece_start + remove_position - piece_position_start + len,
                         length: piece_position_end - remove_position,
                         source: piece_source,
                     };
@@ -72,7 +85,7 @@ impl Buffer {
                 if remove_position != piece_position_start {
                     let before = Piece {
                         start: piece_start,
-                        length: remove_position - piece_position_start - 1,
+                        length: remove_position - piece_position_start,
                         source: piece_source,
                     };
                     if before.length > 0 {
