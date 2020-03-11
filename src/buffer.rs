@@ -43,58 +43,59 @@ impl Buffer {
         }
     }
 
-    pub fn remove(&mut self, remove_position: usize) {
-        let mut search_position = 0;
+    pub fn remove(&mut self, position: usize) {
+        let mut start_in_render = 0;
         let mut cursor = self.pieces.cursor();
         while let Some(piece) = cursor.next() {
-            let piece_position_start = search_position;
-            search_position += piece.length;
-            let piece_position_end = search_position;
-
-            if search_position >= remove_position {
-                let piece_start = piece.start;
-                let piece_source = piece.source;
-
-                let from = match &piece.source {
-                    ORIGINAL => &self.original,
-                    APPEND => &self.append,
-                };
-
-                cursor.prev();
-                cursor.remove();
-
-                if remove_position != piece_position_end - 1 {
-                    let s = std::str::
-                        from_utf8(&from[piece_start + remove_position..])
-                        .unwrap_or_else(panic_with_dialog);
-                    let len = print_and_return(UnicodeSegmentation::graphemes(s, true)
-                        .next()
-                        .unwrap_or_else(|| panic_with_dialog("wtf!")))
-                        .len();
-
-                    let after = Piece {
-                        start: piece_start + remove_position - piece_position_start + len,
-                        length: piece_position_end - remove_position,
-                        source: piece_source,
-                    };
-                    if after.length > 0 {
-                        cursor.insert(after);
-                    }
-                }
-
-                if remove_position != piece_position_start {
-                    let before = Piece {
-                        start: piece_start,
-                        length: remove_position - piece_position_start,
-                        source: piece_source,
-                    };
-                    if before.length > 0 {
-                        cursor.insert(before);
-                    }
-                }
-
-                break;
+            let end_in_render = start_in_render + piece.length;
+            let remove_offset = position - start_in_render;
+            if position >= end_in_render {
+                start_in_render = end_in_render;
+                continue;
             }
+
+            let piece_start = piece.start;
+            let piece_length = piece.length;
+            let piece_source = piece.source;
+            let from = match &piece.source {
+                ORIGINAL => &self.original,
+                APPEND => &self.append,
+            };
+
+            cursor.prev();
+            cursor.remove();
+
+            let len = unsafe {
+                let a = piece_start + remove_offset;
+                let s = std::str::from_utf8_unchecked(&from[a..]);
+                let m = "somehow attempted to remove a character that does not exist!";
+                UnicodeSegmentation::
+                    graphemes(s, true)
+                    .next()
+                    .map(|it| it.len())
+                    .unwrap_or_else(|| panic_with_dialog(m))
+            };
+
+            if position != end_in_render - len {
+                let after = Piece {
+                    start: piece_start + remove_offset + len,
+                    length: piece_length - remove_offset - len,
+                    source: piece_source,
+                };
+                cursor.insert(after);
+            }
+
+            if position != start_in_render {
+                let before = Piece {
+                    start: piece_start,
+                    length: remove_offset,
+                    source: piece_source,
+                };
+                
+                cursor.insert(before);
+            }
+
+            break;
         }
     }
 

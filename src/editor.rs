@@ -38,12 +38,16 @@ impl Editor {
     }
     pub fn move_cursor(&mut self, render: &RenderContext, x: i32, y: i32) {
         let buffer_string = self.buffer.to_string();
-        let buffer_lines: Vec<&str> = buffer_string.split('\n').collect();
+        let buffer_lines: Vec<_> = buffer_string
+            .split('\n')
+            .map(|it| UnicodeSegmentation::graphemes(it, true).collect::<Vec<_>>())
+            .collect();
 
         if self.cursor_x == 0 && x < 0 {
             if self.cursor_y != 0 {
                 self.cursor_y -= 1;
-                self.cursor_x = buffer_lines.get(self.cursor_y).unwrap_or(&"").len();
+                self.cursor_x = buffer_lines.get(self.cursor_y)
+                    .unwrap_or(&Vec::new()).len();
             }
         } else {
             self.cursor_x = ((self.cursor_x as i32) + x) as usize;
@@ -94,7 +98,7 @@ impl Editor {
             .take(self.cursor_x)
             .map(|gc| gc.len())
             .sum::<usize>();
-        print_and_return(length_before_line + length_inside_line)
+        length_before_line + length_inside_line
     }
 
     pub fn handle_keys(&mut self, render: &RenderContext, keycode: Keycode, ctrl: bool) {
@@ -117,10 +121,10 @@ impl Editor {
     fn handle_keys_in_insert_mode(&mut self, render: &RenderContext, keycode: Keycode, ctrl: bool) {
         match keycode {
             Keycode::Backspace => {
-                let pos = self.cursor_position_in_buffer();
-                if pos > 0 {
-                    self.buffer.remove(pos - 1);
+                if self.cursor_x != 0 || self.cursor_y != 0 {
                     self.move_cursor(render, -1, 0);
+                    let pos = self.cursor_position_in_buffer();
+                    self.buffer.remove(pos);
                 }
             },
             Keycode::Return => {
