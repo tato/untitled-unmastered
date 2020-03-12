@@ -1,6 +1,5 @@
 use crate::*;
 use crate::render::RenderContext;
-use sdl2::keyboard::Keycode;
 use unicode_segmentation::UnicodeSegmentation;
 
 #[derive(PartialEq)]
@@ -102,43 +101,43 @@ impl Editor {
         length_before_line + length_inside_line
     }
 
-    pub fn handle_keys(&mut self, render: &RenderContext, keycode: Keycode, ctrl: bool) {
+    pub fn handle_input(&mut self, render: &RenderContext, input: &str, ctrl: bool) {
         match self.mode {
-            Mode::NORMAL => self.handle_keys_in_normal_mode(render, keycode, ctrl),
-            Mode::INSERT => self.handle_keys_in_insert_mode(render, keycode, ctrl),
+            Mode::NORMAL => self.handle_input_in_normal_mode(render, input, ctrl),
+            Mode::INSERT => self.handle_input_in_insert_mode(render, input, ctrl),
         }
     }
 
-    fn handle_keys_in_normal_mode(&mut self, render: &RenderContext, keycode: Keycode, _ctrl: bool) {
-        match keycode {
-            Keycode::I => self.mode = Mode::INSERT,
-            Keycode::H => self.move_cursor(render, -1, 0),
-            Keycode::L => self.move_cursor(render, 1, 0),
-            Keycode::K => self.move_cursor(render, 0, -1),
-            Keycode::J => self.move_cursor(render, 0, 1),
+    fn handle_input_in_normal_mode(&mut self, render: &RenderContext, input: &str, _ctrl: bool) {
+        match input {
+            "i" => self.mode = Mode::INSERT,
+            "h" => self.move_cursor(render, -1, 0),
+            "l" => self.move_cursor(render, 1, 0),
+            "k" => self.move_cursor(render, 0, -1),
+            "j" => self.move_cursor(render, 0, 1),
             _ => {},
         }
     }
-    fn handle_keys_in_insert_mode(&mut self, render: &RenderContext, keycode: Keycode, ctrl: bool) {
-        match keycode {
-            Keycode::Backspace => {
+    fn handle_input_in_insert_mode(&mut self, render: &RenderContext, input: &str, ctrl: bool) {
+        match input {
+            keys::BACKSPACE => {
                 if self.cursor_x != 0 || self.cursor_y != 0 {
                     self.move_cursor(render, -1, 0);
                     let pos = self.cursor_position_in_buffer();
                     self.buffer.remove(pos);
                 }
             },
-            Keycode::Return => {
+            "\n" => {
                 let pos = self.cursor_position_in_buffer();
                 self.buffer.insert("\n", pos);
                 self.move_cursor(render, 0, 1);
                 self.cursor_x = 0;
             },
-            Keycode::Left => self.move_cursor(render, -1, 0),
-            Keycode::Right => self.move_cursor(render, 1, 0),
-            Keycode::Up => self.move_cursor(render, 0, -1),
-            Keycode::Down => self.move_cursor(render, 0, 1),
-            Keycode::O if ctrl => {
+            keys::LEFT => self.move_cursor(render, -1, 0),
+            keys::RIGHT => self.move_cursor(render, 1, 0),
+            keys::UP => self.move_cursor(render, 0, -1),
+            keys::DOWN => self.move_cursor(render, 0, 1),
+            "o" if ctrl => {
                 let result = nfd::open_file_dialog(None, None)
                     .unwrap_or_else(panic_with_dialog);
 
@@ -149,7 +148,7 @@ impl Editor {
                     self.buffer = buffer::Buffer::from(&t);
                 }
             },
-            Keycode::S if ctrl => {
+            "s" if ctrl => {
                 if !self.editing_file_path.is_empty() {
                     std::fs::write(
                         &self.editing_file_path,
@@ -157,7 +156,7 @@ impl Editor {
                 }
 
             },
-            Keycode::Escape => self.mode = Mode::NORMAL,
+            keys::ESCAPE => self.mode = Mode::NORMAL,
             _ => {},
         }
     }

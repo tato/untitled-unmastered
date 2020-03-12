@@ -22,6 +22,7 @@ pub fn panic_with_dialog<Any>(m: impl std::fmt::Display) -> Any {
     panic!("{}", m);
 }
 
+pub mod keys;
 pub mod buffer;
 pub mod render;
 pub mod editor;
@@ -55,7 +56,9 @@ fn main() {
                 Event::KeyDown { keycode: Some(keycode), keymod, .. } => {
                     let ctrl = keymod.contains(keyboard::Mod::LCTRLMOD)
                         || keymod.contains(keyboard::Mod::RCTRLMOD);
-                    editor.handle_keys(&render, keycode, ctrl);
+                    if let Some(gc) = keys::get_utf8_for_keycode(keycode) {
+                        editor.handle_input(&render, gc, ctrl);
+                    }
                 }
                 Event::TextInput { text, .. } => {
                     if let editor::Mode::INSERT = editor.mode {
