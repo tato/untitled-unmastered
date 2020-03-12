@@ -79,11 +79,16 @@ fn main() {
             background_color
         };
 
+        let cursor_width = match editor.mode {
+            editor::Mode::INSERT => character_width / 4,
+            _ => character_width,
+        };
+
         let cursor_screen_x = ((editor.cursor_x as u32) * character_width) as i32;
         let cursor_screen_y = (((editor.cursor_y - editor.y_render_offset) as u32) * character_height) as i32;
         let cursor_target = Rect::new(
             cursor_screen_x, cursor_screen_y,
-            character_width, character_height,
+            cursor_width, character_height,
         );
         render.fill_rect(cursor_target, cursor_color).unwrap_or(());
 
@@ -126,6 +131,7 @@ fn main() {
             for (ch_index, c) in gcs.enumerate() {
                 let character_color = if line_index == editor.cursor_y as usize
                     && ch_index == editor.cursor_x as usize
+                    && editor.mode != editor::Mode::INSERT
                 {
                     if (elapsed_ms / cursor_color_ms_interval) % 2 == 0 {
                         background_color

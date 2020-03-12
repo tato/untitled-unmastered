@@ -3,6 +3,7 @@ use crate::render::RenderContext;
 use sdl2::keyboard::Keycode;
 use unicode_segmentation::UnicodeSegmentation;
 
+#[derive(PartialEq)]
 pub enum Mode {
     NORMAL,
     INSERT,
