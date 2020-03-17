@@ -4,37 +4,23 @@ use sdl2::surface::Surface;
 use sdl2::*;
 use std::collections::HashMap;
 use std::collections::hash_map::Entry;
-use crate::*;
+use crate::panic_with_dialog;
 
-pub struct RenderContext<'sdlttf> {
-    canvas: sdl2::render::WindowCanvas,
-    texture_creator: sdl2::render::TextureCreator<sdl2::video::WindowContext>,
-    // ttf_context: &'sdlttf ttf::Sdl2TtfContext,
+pub struct RenderContext<'a> {
+    canvas: &'a mut render::WindowCanvas,
+    texture_creator: &'a render::TextureCreator<video::WindowContext>,
+    // ttf_context: &'a ttf::Sdl2TtfContext,
 
-    font: ttf::Font<'sdlttf, 'static>,
+    font: ttf::Font<'a, 'static>,
     pub character_width: u32,
     pub character_height: u32,
 
-    cache: HashMap<(String, Color), Surface<'sdlttf>>,
+    cache: HashMap<(String, Color), render::Texture<'a>>,
 }
 impl<'a> RenderContext<'a> {
-    pub fn new(video_context: &sdl2::VideoSubsystem,
+    pub fn new(canvas: &'a mut render::WindowCanvas,
+               texture_creator: &'a render::TextureCreator<video::WindowContext>,
                ttf_context: &'a ttf::Sdl2TtfContext) -> Self {
-
-        let window = video_context
-            .window("uu", 10, 10)
-            .maximized()
-            .position_centered()
-            .opengl()
-            .build()
-            .unwrap_or_else(panic_with_dialog);
-
-        let canvas = window
-            .into_canvas()
-            .build()
-            .unwrap_or_else(panic_with_dialog);
-        let texture_creator = canvas.texture_creator();
-
         let rwops = rwops::RWops::from_bytes(
             include_bytes!("./Cousine-Regular.ttf")).unwrap();
         let font = ttf_context.load_font_from_rwops(rwops, 18).unwrap();
@@ -84,7 +70,7 @@ impl<'a> RenderContext<'a> {
         Ok(())
     }
 
-    pub fn draw_character(&mut self, c: &str, color: Color, x: i32, y: i32) 
+    pub fn draw_character(&mut self, c: &str, color: Color, x: i32, y: i32)
         -> Result<(), String>
     {
         if let Entry::Vacant(entry) = self.cache.entry((c.to_string(), color)) {
@@ -92,14 +78,15 @@ impl<'a> RenderContext<'a> {
                 .render(c)
                 .blended(color)
                 .map_err(|e| e.to_string())?;
-            entry.insert(surface);
+            let tc = &self.texture_creator;
+            let texture = tc
+                .create_texture_from_surface(&surface)
+                .map_err(|e| e.to_string())?;
+            entry.insert(texture);
         }
-        let surface = &self.cache[&(c.to_string(), color)];
-        let target = Rect::new(x, y, surface.width(), surface.height());
-        let texture = self
-            .texture_creator
-            .create_texture_from_surface(&surface)
-            .map_err(|e| e.to_string())?;
+        let texture = &self.cache[&(c.to_string(), color)];
+        let query = texture.query();
+        let target = Rect::new(x, y, query.width, query.height);
         self.canvas.copy(&texture, None, Some(target))?;
 
         Ok(())

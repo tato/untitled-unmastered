@@ -17,7 +17,7 @@ pub fn print_and_return<T>(v: T) -> T where T: std::fmt::Debug {
 
 pub fn panic_with_dialog<Any>(m: impl std::fmt::Display) -> Any {
     sdl2::messagebox::show_simple_message_box(
-        sdl2::messagebox::MessageBoxFlag::ERROR, 
+        sdl2::messagebox::MessageBoxFlag::ERROR,
         "uu error", &m.to_string(), None).expect(&m.to_string());
     panic!("{}", m);
 }
@@ -32,7 +32,19 @@ fn main() {
     let sdl_context = sdl2::init().unwrap_or_else(panic_with_dialog);
     let video_context = sdl_context.video().unwrap_or_else(panic_with_dialog);
     let ttf_context = sdl2::ttf::init().unwrap_or_else(panic_with_dialog);
-    let mut render = RenderContext::new(&video_context, &ttf_context);
+    let window = video_context
+        .window("uu", 10, 10)
+        .maximized()
+        .position_centered()
+        .opengl()
+        .build()
+        .unwrap_or_else(panic_with_dialog);
+    let mut canvas = window
+        .into_canvas()
+        .build()
+        .unwrap_or_else(panic_with_dialog);
+    let texture_creator = canvas.texture_creator();
+    let mut render = RenderContext::new(&mut canvas, &texture_creator, &ttf_context);
 
     let character_width = render.character_width;
     let character_height = render.character_height;
@@ -98,10 +110,10 @@ fn main() {
         let _window_width_in_characters = render.width() / character_width;
         let window_height_in_characters = render.height() / character_height;
 
-        let status_line_y = 
+        let status_line_y =
             ((window_height_in_characters - 2) * character_height) as i32;
         let status_line_rect = Rect::new(
-            0, status_line_y, 
+            0, status_line_y,
             render.width(), character_height
         );
         render.fill_rect(status_line_rect, foreground_color).unwrap_or(());
