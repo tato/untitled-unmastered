@@ -1,6 +1,6 @@
+extern crate unicode_segmentation;
 extern crate sdl2;
 extern crate nfd;
-extern crate unicode_segmentation;
 
 use sdl2::*;
 use sdl2::event::Event;
@@ -25,6 +25,8 @@ pub fn panic_with_dialog<Any>(m: impl std::fmt::Display) -> Any {
 pub mod keys;
 pub mod buffer;
 pub mod render;
+pub mod bindings;
+pub mod actions;
 pub mod editor;
 use render::RenderContext;
 

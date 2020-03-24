@@ -20,6 +20,7 @@ git = "https://github.com/Rust-SDL2/rust-sdl2.git"
 default-features = false
 features = [ "bundled", "ttf" ]
 
+# native file dialogs
 [dependencies.nfd]
 git = "https://github.com/saurvs/nfd-rs"
 rev = "07578c5"

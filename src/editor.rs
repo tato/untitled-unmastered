@@ -1,6 +1,7 @@
 use crate::*;
 use crate::render::RenderContext;
 use unicode_segmentation::UnicodeSegmentation;
+use std::collections::HashMap;
 
 #[derive(PartialEq)]
 pub enum Mode {
@@ -19,6 +20,8 @@ pub struct Editor {
     pub cursor_x: usize,
     pub cursor_y: usize,
     pub cursor_animation_instant: Instant,
+
+    pub bindings: HashMap<&'static str, &'static bindings::KeyBinding>
 }
 
 impl Editor {
@@ -34,6 +37,11 @@ impl Editor {
             cursor_x: 0,
             cursor_y: 0,
             cursor_animation_instant: Instant::now(),
+
+            bindings: bindings::BINDINGS
+                .iter()
+                .map(|kb| (kb.keys, kb))
+                .collect(),
         }
     }
     pub fn move_cursor(&mut self, render: &RenderContext, x: i32, y: i32) {
