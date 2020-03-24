@@ -10,7 +10,7 @@ use sdl2::keyboard::Keycode;
 // }
 
 // const BINDINGS: &[KeyBinding] = &[
-//     KeyBinding { 
+//     KeyBinding {
 //         keys: &[Keycode::Backspace],
 //         modifs: &[],
 //         mode: Mode::INSERT,
@@ -44,6 +44,7 @@ pub fn get_utf8_for_keycode(keycode: Keycode) -> Option<&'static str> {
     match keycode {
         Keycode::Backspace => Some(BACKSPACE),
         Keycode::Escape => Some(ESCAPE),
+        Keycode::Return => Some("\n"),
         Keycode::Left => Some(LEFT),
         Keycode::Right => Some(RIGHT),
         Keycode::Up => Some(UP),

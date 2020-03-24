@@ -9,7 +9,7 @@ pub enum Mode {
 }
 
 pub struct Editor {
-    pub mode: Mode, 
+    pub mode: Mode,
 
     pub buffer: buffer::Buffer,
     pub y_render_offset: usize,
@@ -69,7 +69,7 @@ impl Editor {
         let ch = render.character_height;
         let window_height_in_characters = (render.height() / ch) as usize;
         if y > 0 &&
-            self.cursor_y > self.y_render_offset + window_height_in_characters - 7 
+            self.cursor_y > self.y_render_offset + window_height_in_characters - 7
         {
             self.y_render_offset += y as usize;
         }
@@ -101,14 +101,14 @@ impl Editor {
         length_before_line + length_inside_line
     }
 
-    pub fn handle_input(&mut self, render: &RenderContext, input: &str, ctrl: bool) {
+    pub fn handle_input(&mut self, render: &RenderContext, input: &str, ctrl: bool, is_text_input: bool) {
         match self.mode {
-            Mode::NORMAL => self.handle_input_in_normal_mode(render, input, ctrl),
-            Mode::INSERT => self.handle_input_in_insert_mode(render, input, ctrl),
+            Mode::NORMAL => self.handle_input_in_normal_mode(render, input, ctrl, is_text_input),
+            Mode::INSERT => self.handle_input_in_insert_mode(render, input, ctrl, is_text_input),
         }
     }
 
-    fn handle_input_in_normal_mode(&mut self, render: &RenderContext, input: &str, _ctrl: bool) {
+    fn handle_input_in_normal_mode(&mut self, render: &RenderContext, input: &str, _ctrl: bool, _is_text_input: bool) {
         match input {
             "i" => self.mode = Mode::INSERT,
             "h" => self.move_cursor(render, -1, 0),
@@ -118,7 +118,7 @@ impl Editor {
             _ => {},
         }
     }
-    fn handle_input_in_insert_mode(&mut self, render: &RenderContext, input: &str, ctrl: bool) {
+    fn handle_input_in_insert_mode(&mut self, render: &RenderContext, input: &str, ctrl: bool, is_text_input: bool) {
         match input {
             keys::BACKSPACE => {
                 if self.cursor_x != 0 || self.cursor_y != 0 {
@@ -157,6 +157,11 @@ impl Editor {
 
             },
             keys::ESCAPE => self.mode = Mode::NORMAL,
+            _ if is_text_input => {
+                let pos = self.cursor_position_in_buffer();
+                self.buffer.insert(input, pos);
+                self.move_cursor(&render, 1, 0);
+            },
             _ => {},
         }
     }

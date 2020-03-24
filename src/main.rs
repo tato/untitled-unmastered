@@ -68,16 +68,15 @@ fn main() {
                 Event::KeyDown { keycode: Some(keycode), keymod, .. } => {
                     let ctrl = keymod.contains(keyboard::Mod::LCTRLMOD)
                         || keymod.contains(keyboard::Mod::RCTRLMOD);
+                    let is_text_input = false;
                     if let Some(gc) = keys::get_utf8_for_keycode(keycode) {
-                        editor.handle_input(&render, gc, ctrl);
+                        editor.handle_input(&render, gc, ctrl, is_text_input);
                     }
                 }
                 Event::TextInput { text, .. } => {
-                    if let editor::Mode::INSERT = editor.mode {
-                        let pos = editor.cursor_position_in_buffer();
-                        editor.buffer.insert(&text, pos);
-                        editor.move_cursor(&render, 1, 0);
-                    }
+                    let ctrl = false;
+                    let is_text_input = true;
+                    editor.handle_input(&render, &text, ctrl, is_text_input);
                 }
 
                 _ => {}
