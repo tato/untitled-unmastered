@@ -1,0 +1,8 @@
+[package]
+name = "rust-macros"
+version = "1.0.0"
+authors = ["Pablo Tato Ramos <pabtatoramos@gmail.com>"]
+edition = "2018"
+
+[lib]
+proc-macro = true

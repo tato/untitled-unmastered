@@ -1,3 +1,5 @@
+#![feature(proc_macro_hygiene)]
+
 extern crate unicode_segmentation;
 extern crate sdl2;
 extern crate nfd;
@@ -7,6 +9,7 @@ use sdl2::event::Event;
 use sdl2::pixels::Color;
 use sdl2::rect::Rect;
 use unicode_segmentation::UnicodeSegmentation;
+use rust_macros::make_binding;
 use std::time::Instant;
 use std::cmp::min;
 
@@ -25,8 +28,6 @@ pub fn panic_with_dialog<Any>(m: impl std::fmt::Display) -> Any {
 pub mod keys;
 pub mod buffer;
 pub mod render;
-pub mod bindings;
-pub mod actions;
 pub mod editor;
 use render::RenderContext;
 
@@ -68,17 +69,33 @@ fn main() {
                     break 'running;
                 }
                 Event::KeyDown { keycode: Some(keycode), keymod, .. } => {
-                    let ctrl = keymod.contains(keyboard::Mod::LCTRLMOD)
-                        || keymod.contains(keyboard::Mod::RCTRLMOD);
+                    let mut modifs = 0u32;
+                    if keymod.contains(keyboard::Mod::LCTRLMOD) {
+                        todo!("bring back the CTRL constant");
+                        // modifs |= keys::CTRL;
+                    }
+                    if keymod.contains(keyboard::Mod::RCTRLMOD) {
+                        todo!("bring back the CTRL constant");
+                        // modifs |= keys::CTRL;
+                    }
+
                     let is_text_input = false;
                     if let Some(gc) = keys::get_utf8_for_keycode(keycode) {
-                        editor.handle_input(&render, gc, ctrl, is_text_input);
+                        editor.handle_input(&render, gc, modifs, is_text_input);
                     }
                 }
                 Event::TextInput { text, .. } => {
-                    let ctrl = false;
+                    let mut modifs = 0u32;
+                    // TODO(ptato) Find the API that queries modifiers
+                    // if keymod.contains(keyboard::Mod::LCTRLMOD) {
+                    //     modifs |= keys::CONTROL;
+                    // }
+                    // if keymod.contains(keyboard::Mod::RCTRLMOD) {
+                    //     modifs |= keys::CONTROL;
+                    // }
+
                     let is_text_input = true;
-                    editor.handle_input(&render, &text, ctrl, is_text_input);
+                    editor.handle_input(&render, &text, modifs, is_text_input);
                 }
 
                 _ => {}

@@ -1,7 +1,6 @@
 use crate::*;
 use crate::render::RenderContext;
 use unicode_segmentation::UnicodeSegmentation;
-use std::collections::HashMap;
 
 #[derive(PartialEq)]
 pub enum Mode {
@@ -21,13 +20,14 @@ pub struct Editor {
     pub cursor_y: usize,
     pub cursor_animation_instant: Instant,
 
-    pub bindings: HashMap<&'static str, &'static bindings::KeyBinding>
+    pub matching_input_text: String,
+    pub matching_input_modifs: Vec<u32>,
 }
 
 impl Editor {
     pub fn new() -> Self {
         Self {
-            mode: Mode::INSERT,
+            mode: Mode::NORMAL,
 
             buffer: buffer::Buffer::new(),
             y_render_offset: 0,
@@ -38,10 +38,8 @@ impl Editor {
             cursor_y: 0,
             cursor_animation_instant: Instant::now(),
 
-            bindings: bindings::BINDINGS
-                .iter()
-                .map(|kb| (kb.keys, kb))
-                .collect(),
+            matching_input_text: String::new(),
+            matching_input_modifs: Vec::new(),
         }
     }
     pub fn move_cursor(&mut self, render: &RenderContext, x: i32, y: i32) {
@@ -109,43 +107,63 @@ impl Editor {
         length_before_line + length_inside_line
     }
 
-    pub fn handle_input(&mut self, render: &RenderContext, input: &str, ctrl: bool, is_text_input: bool) {
+    pub fn handle_input(&mut self, render: &RenderContext, text: &str, modifs: u32, _is_text_input: bool) {
+        self.matching_input_text += text;
+        self.matching_input_modifs.push(modifs);
+
         match self.mode {
-            Mode::NORMAL => self.handle_input_in_normal_mode(render, input, ctrl, is_text_input),
-            Mode::INSERT => self.handle_input_in_insert_mode(render, input, ctrl, is_text_input),
+            Mode::NORMAL => self.handle_input_in_normal_mode(render),
+            Mode::INSERT => self.handle_input_in_insert_mode(render),
         }
     }
 
-    fn handle_input_in_normal_mode(&mut self, render: &RenderContext, input: &str, _ctrl: bool, _is_text_input: bool) {
-        match input {
-            "i" => self.mode = Mode::INSERT,
-            "h" => self.move_cursor(render, -1, 0),
-            "l" => self.move_cursor(render, 1, 0),
-            "k" => self.move_cursor(render, 0, -1),
-            "j" => self.move_cursor(render, 0, 1),
-            _ => {},
+    fn handle_input_in_normal_mode(&mut self, render: &RenderContext) {
+        let mut reset_matching_input = true;
+
+        let mit: &str = &self.matching_input_text;
+        let mim: &[u32] = &self.matching_input_modifs;
+        match (mit, mim) {
+            make_binding!(i) => self.mode = Mode::INSERT,
+            make_binding!(h) => self.move_cursor(render, -1, 0),
+            make_binding!(l) => self.move_cursor(render, 1, 0),
+            make_binding!(k) => self.move_cursor(render, 0, -1),
+            make_binding!(j) => self.move_cursor(render, 0, 1),
+            make_binding!(d, d) => println!("dd is nice!"),
+            make_binding!(CTRL|a, b, CTRL|c) => println!("abc is nice!"),
+            _ => reset_matching_input = false,
+        }
+
+        if reset_matching_input {
+            self.matching_input_text = String::new();
+            self.matching_input_modifs = Vec::new();
         }
     }
-    fn handle_input_in_insert_mode(&mut self, render: &RenderContext, input: &str, ctrl: bool, is_text_input: bool) {
-        match input {
-            keys::BACKSPACE => {
+    fn handle_input_in_insert_mode(&mut self, render: &RenderContext) {
+        let mut reset_matching_input = true;
+
+        let mit: &str = &self.matching_input_text;
+        let mim: &[u32] = &self.matching_input_modifs;
+        match (mit, mim) {
+            /*
+            todo!() BACKSPACE => {
                 if self.cursor_x != 0 || self.cursor_y != 0 {
                     self.move_cursor(render, -1, 0);
                     let pos = self.cursor_position_in_buffer();
                     self.buffer.remove(pos);
                 }
-            },
-            "\n" => {
+            }
+            todo!() "\n" => {
                 let pos = self.cursor_position_in_buffer();
                 self.buffer.insert("\n", pos);
                 self.move_cursor(render, 0, 1);
                 self.cursor_x = 0;
-            },
-            keys::LEFT => self.move_cursor(render, -1, 0),
-            keys::RIGHT => self.move_cursor(render, 1, 0),
-            keys::UP => self.move_cursor(render, 0, -1),
-            keys::DOWN => self.move_cursor(render, 0, 1),
-            "o" if ctrl => {
+            }
+            todo!() keys::LEFT => self.move_cursor(render, -1, 0),
+            todo!() keys::RIGHT => self.move_cursor(render, 1, 0),
+            todo!() keys::UP => self.move_cursor(render, 0, -1),
+            todo!() keys::DOWN => self.move_cursor(render, 0, 1),
+             */
+            make_binding!(CTRL|o) => {
                 let result = nfd::open_file_dialog(None, None)
                     .unwrap_or_else(panic_with_dialog);
 
@@ -156,7 +174,7 @@ impl Editor {
                     self.buffer = buffer::Buffer::from(&t);
                 }
             },
-            "s" if ctrl => {
+            make_binding!(CTRL|s) => {
                 if !self.editing_file_path.is_empty() {
                     std::fs::write(
                         &self.editing_file_path,
@@ -164,13 +182,21 @@ impl Editor {
                 }
 
             },
-            keys::ESCAPE => self.mode = Mode::NORMAL,
+            /*
+            todo!() keys::ESCAPE => self.mode = Mode::NORMAL,
             _ if is_text_input => {
                 let pos = self.cursor_position_in_buffer();
                 self.buffer.insert(input, pos);
                 self.move_cursor(&render, 1, 0);
             },
-            _ => {},
+             */
+            _ => reset_matching_input = false,
+        }
+
+        if reset_matching_input {
+            self.matching_input_text = String::new();
+            self.matching_input_modifs = Vec::new();
         }
     }
 }
+

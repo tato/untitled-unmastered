@@ -137,6 +137,10 @@ version = "0.6.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
+name = "rust-macros"
+version = "1.0.0"
+
+[[package]]
 name = "sdl2"
 version = "0.33.0"
 source = "git+https://github.com/Rust-SDL2/rust-sdl2.git#4e81db58fb93f2e09e42e2f088cb2a038d9ebfac"
@@ -200,6 +204,7 @@ version = "1.0.0"
 dependencies = [
  "linked-list 0.0.3 (git+https://github.com/contain-rs/linked-list?rev=8c1931c)",
  "nfd 0.0.4 (git+https://github.com/saurvs/nfd-rs?rev=07578c5)",
+ "rust-macros 1.0.0",
  "sdl2 0.33.0 (git+https://github.com/Rust-SDL2/rust-sdl2.git)",
  "unicode-segmentation 1.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
