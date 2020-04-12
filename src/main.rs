@@ -9,7 +9,7 @@ use sdl2::event::Event;
 use sdl2::pixels::Color;
 use sdl2::rect::Rect;
 use unicode_segmentation::UnicodeSegmentation;
-use rust_macros::make_binding;
+use rust_macros::*;
 use std::time::Instant;
 use std::cmp::min;
 
@@ -71,12 +71,10 @@ fn main() {
                 Event::KeyDown { keycode: Some(keycode), keymod, .. } => {
                     let mut modifs = 0u32;
                     if keymod.contains(keyboard::Mod::LCTRLMOD) {
-                        todo!("bring back the CTRL constant");
-                        // modifs |= keys::CTRL;
+                        modifs |= CTRL!();
                     }
                     if keymod.contains(keyboard::Mod::RCTRLMOD) {
-                        todo!("bring back the CTRL constant");
-                        // modifs |= keys::CTRL;
+                        modifs |= CTRL!();
                     }
 
                     let is_text_input = false;
