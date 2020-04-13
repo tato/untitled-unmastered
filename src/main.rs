@@ -13,7 +13,7 @@ use sdl2::pixels::Color;
 use sdl2::rect::Rect;
 use unicode_segmentation::UnicodeSegmentation;
 use rust_macros::*;
-use std::time::Instant;
+use std::time::{Duration,Instant};
 use std::cmp::min;
 
 pub fn print_and_return<T>(v: T) -> T where T: std::fmt::Debug {
@@ -175,9 +175,11 @@ fn main() {
         );
         render.fill_rect(status_line_rect, foreground_color).unwrap_or(());
 
-        let status_text = format!(" {} > {} <",
+        let status_text = format!(" {} > {} < $ {} {:?}",
                                   editor.cursor_y,
-                                  editor.editing_file_path);
+                                  editor.editing_file_path,
+                                  editor.matching_input_text,
+                                  editor.matching_input_timeout);
 
         let gcs = UnicodeSegmentation::graphemes(status_text.as_str(), true);
         for (ci_usize, c) in gcs.enumerate() {
@@ -224,6 +226,8 @@ fn main() {
 
         render.finish_frame();
 
-        ::std::thread::sleep(std::time::Duration::new(0, 1_000_000_u32 / 30));
+        let frame_duration = Duration::new(0, (1_000_000_000 / 60) as u32);
+        editor.fade_matching_input(frame_duration);
+        ::std::thread::sleep(frame_duration);
     }
 }

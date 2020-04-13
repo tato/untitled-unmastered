@@ -22,6 +22,7 @@ pub struct Editor {
 
     pub matching_input_text: String,
     pub matching_input_modifs: Vec<u32>,
+    pub matching_input_timeout: Duration,
 }
 
 impl Editor {
@@ -40,6 +41,7 @@ impl Editor {
 
             matching_input_text: String::new(),
             matching_input_modifs: Vec::new(),
+            matching_input_timeout: Duration::from_secs(1),
         }
     }
     pub fn move_cursor(&mut self, render: &RenderContext, x: i32, y: i32) {
@@ -110,6 +112,7 @@ impl Editor {
     pub fn handle_input(&mut self, render: &RenderContext, text: &str, modifs: u32, is_text_input: bool) {
         self.matching_input_text += text;
         self.matching_input_modifs.push(modifs);
+        self.matching_input_timeout = Duration::from_secs(1);
 
         match self.mode {
             Mode::NORMAL => self.handle_input_in_normal_mode(render),
@@ -192,6 +195,15 @@ impl Editor {
         if reset_matching_input {
             self.matching_input_text = String::new();
             self.matching_input_modifs = Vec::new();
+        }
+    }
+
+    pub fn fade_matching_input(&mut self, delta: Duration) {
+        if delta > self.matching_input_timeout {
+            self.matching_input_text = String::new();
+            self.matching_input_modifs = Vec::new();
+        } else {
+            self.matching_input_timeout -= delta;
         }
     }
 }
