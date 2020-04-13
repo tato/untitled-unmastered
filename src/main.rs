@@ -11,7 +11,7 @@ use sdl2::event::Event;
 use sdl2::pixels::Color;
 use sdl2::rect::Rect;
 use unicode_segmentation::UnicodeSegmentation;
-use rust_macros::{CTRL, ALT, SHIFT, make_binding};
+use rust_macros::*;
 use std::time::Instant;
 use std::cmp::min;
 

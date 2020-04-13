@@ -107,13 +107,13 @@ impl Editor {
         length_before_line + length_inside_line
     }
 
-    pub fn handle_input(&mut self, render: &RenderContext, text: &str, modifs: u32, _is_text_input: bool) {
+    pub fn handle_input(&mut self, render: &RenderContext, text: &str, modifs: u32, is_text_input: bool) {
         self.matching_input_text += text;
         self.matching_input_modifs.push(modifs);
 
         match self.mode {
             Mode::NORMAL => self.handle_input_in_normal_mode(render),
-            Mode::INSERT => self.handle_input_in_insert_mode(render),
+            Mode::INSERT => self.handle_input_in_insert_mode(render, text, is_text_input),
         }
     }
 
@@ -138,31 +138,29 @@ impl Editor {
             self.matching_input_modifs = Vec::new();
         }
     }
-    fn handle_input_in_insert_mode(&mut self, _render: &RenderContext) {
+    fn handle_input_in_insert_mode(&mut self, render: &RenderContext, input: &str, is_text_input: bool) {
         let mut reset_matching_input = true;
 
         let mit: &str = &self.matching_input_text;
         let mim: &[u32] = &self.matching_input_modifs;
         match (mit, mim) {
-            /*
-            todo!() BACKSPACE => {
+            make_binding!(BACKSPACE) => {
                 if self.cursor_x != 0 || self.cursor_y != 0 {
                     self.move_cursor(render, -1, 0);
                     let pos = self.cursor_position_in_buffer();
                     self.buffer.remove(pos);
                 }
             }
-            todo!() "\n" => {
+            make_binding!(RETURN) => {
                 let pos = self.cursor_position_in_buffer();
                 self.buffer.insert("\n", pos);
                 self.move_cursor(render, 0, 1);
                 self.cursor_x = 0;
             }
-            todo!() keys::LEFT => self.move_cursor(render, -1, 0),
-            todo!() keys::RIGHT => self.move_cursor(render, 1, 0),
-            todo!() keys::UP => self.move_cursor(render, 0, -1),
-            todo!() keys::DOWN => self.move_cursor(render, 0, 1),
-             */
+            make_binding!(LEFT) => self.move_cursor(render, -1, 0),
+            make_binding!(RIGHT) => self.move_cursor(render, 1, 0),
+            make_binding!(UP) => self.move_cursor(render, 0, -1),
+            make_binding!(DOWN) => self.move_cursor(render, 0, 1),
             make_binding!(CTRL|o) => {
                 let result = nfd::open_file_dialog(None, None)
                     .unwrap_or_else(panic_with_dialog);
@@ -182,14 +180,12 @@ impl Editor {
                 }
 
             },
-            /*
-            todo!() keys::ESCAPE => self.mode = Mode::NORMAL,
+            make_binding!(ESCAPE) => self.mode = Mode::NORMAL,
             _ if is_text_input => {
                 let pos = self.cursor_position_in_buffer();
                 self.buffer.insert(input, pos);
                 self.move_cursor(&render, 1, 0);
             },
-             */
             _ => reset_matching_input = false,
         }
 
