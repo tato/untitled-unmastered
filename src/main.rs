@@ -7,6 +7,7 @@ extern crate sdl2;
 extern crate nfd;
 
 use sdl2::keyboard;
+use sdl2::keyboard::Keycode;
 use sdl2::event::Event;
 use sdl2::pixels::Color;
 use sdl2::rect::Rect;
@@ -28,7 +29,19 @@ pub fn panic_with_dialog<Any>(m: impl std::fmt::Display) -> Any {
     panic!("{}", m);
 }
 
-pub mod keys;
+pub fn get_utf8_for_keycode(keycode: Keycode) -> Option<&'static str> {
+    match keycode {
+        Keycode::Backspace => Some(BACKSPACE!()),
+        Keycode::Escape => Some(ESCAPE!()),
+        Keycode::Return => Some(RETURN!()),
+        Keycode::Left => Some(LEFT!()),
+        Keycode::Right => Some(RIGHT!()),
+        Keycode::Up => Some(UP!()),
+        Keycode::Down => Some(DOWN!()),
+        _ => None,
+    }
+}
+
 pub mod buffer;
 pub mod render;
 pub mod editor;
@@ -93,7 +106,7 @@ fn main() {
                     }
 
                     let is_text_input = false;
-                    if let Some(gc) = keys::get_utf8_for_keycode(keycode) {
+                    if let Some(gc) = get_utf8_for_keycode(keycode) {
                         editor.handle_input(&render, gc, modifs, is_text_input);
                     }
                 }
