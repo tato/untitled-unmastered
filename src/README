@@ -1,8 +1,5 @@
-actions.rs  basic editor actions and commands (e.g. "delete a line")
-bindings.rs definition of key bindings
 buffer.rs   store and edit utf-8 strings (implemented as a piece table)
 editor.rs   editor logic and state
-keys.rs     mapping from keyboard keys to utf-8 strings
 main.rs     entry point, setup, main loop
 render.rs   painting characters to the screen
 
