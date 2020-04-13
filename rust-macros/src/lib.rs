@@ -2,7 +2,7 @@ extern crate proc_macro;
 use proc_macro::{Literal,TokenStream,TokenTree};
 
 // the only fields allowed to be public in a proc-macro crate are the
-// procedural macros themselves, so this generates them in order to export
+// procedural macros themselves, so this generates some that export
 // the key modifier bitfield
 macro_rules! modif_definitions {
     ( $(const $name:ident = $value:expr;)*) => {

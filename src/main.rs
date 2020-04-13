@@ -1,6 +1,5 @@
 #![feature(proc_macro_hygiene)]
 
-#![allow(unused_mut)]
 #![allow(clippy::new_without_default)]
 
 extern crate unicode_segmentation;
@@ -80,10 +79,17 @@ fn main() {
                     if keymod.contains(keyboard::Mod::RCTRLMOD) {
                         modifs |= CTRL!();
                     }
-
-                    if false && todo!() {
-                        modifs |= ALT!();
+                    if keymod.contains(keyboard::Mod::LSHIFTMOD) {
                         modifs |= SHIFT!();
+                    }
+                    if keymod.contains(keyboard::Mod::RSHIFTMOD) {
+                        modifs |= SHIFT!();
+                    }
+                    if keymod.contains(keyboard::Mod::LALTMOD) {
+                        modifs |= ALT!();
+                    }
+                    if keymod.contains(keyboard::Mod::RALTMOD) {
+                        modifs |= ALT!();
                     }
 
                     let is_text_input = false;
@@ -92,14 +98,27 @@ fn main() {
                     }
                 }
                 Event::TextInput { text, .. } => {
+                    let keymod = sdl_context.keyboard().mod_state();
                     let mut modifs = 0_u32;
-                    // TODO(ptato) Find the API that queries modifiers
-                    // if keymod.contains(keyboard::Mod::LCTRLMOD) {
-                    //     modifs |= keys::CONTROL;
-                    // }
-                    // if keymod.contains(keyboard::Mod::RCTRLMOD) {
-                    //     modifs |= keys::CONTROL;
-                    // }
+
+                    if keymod.contains(keyboard::Mod::LCTRLMOD) {
+                        modifs |= CTRL!();
+                    }
+                    if keymod.contains(keyboard::Mod::RCTRLMOD) {
+                        modifs |= CTRL!();
+                    }
+                    if keymod.contains(keyboard::Mod::LSHIFTMOD) {
+                        modifs |= SHIFT!();
+                    }
+                    if keymod.contains(keyboard::Mod::RSHIFTMOD) {
+                        modifs |= SHIFT!();
+                    }
+                    if keymod.contains(keyboard::Mod::LALTMOD) {
+                        modifs |= ALT!();
+                    }
+                    if keymod.contains(keyboard::Mod::RALTMOD) {
+                        modifs |= ALT!();
+                    }
 
                     let is_text_input = true;
                     editor.handle_input(&render, &text, modifs, is_text_input);
