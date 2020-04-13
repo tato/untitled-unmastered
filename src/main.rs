@@ -60,6 +60,7 @@ fn main() {
         .unwrap_or_else(panic_with_dialog);
     let mut canvas = window
         .into_canvas()
+        .present_vsync()
         .build()
         .unwrap_or_else(panic_with_dialog);
     let texture_creator = canvas.texture_creator();
@@ -77,6 +78,8 @@ fn main() {
     let mut event_pump = sdl_context
         .event_pump()
         .unwrap_or_else(panic_with_dialog);
+
+    let mut previous_frame_instant = Instant::now();
 
     'running: loop {
         for event in event_pump.poll_iter() {
@@ -226,8 +229,8 @@ fn main() {
 
         render.finish_frame();
 
-        let frame_duration = Duration::new(0, (1_000_000_000 / 60) as u32);
+        let frame_duration = previous_frame_instant.elapsed();
         editor.fade_matching_input(frame_duration);
-        ::std::thread::sleep(frame_duration);
+        previous_frame_instant = Instant::now();
     }
 }
