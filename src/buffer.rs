@@ -91,7 +91,7 @@ impl Buffer {
                     length: remove_offset,
                     source: piece_source,
                 };
-                
+
                 cursor.insert(before);
             }
 

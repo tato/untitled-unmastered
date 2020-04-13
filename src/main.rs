@@ -1,15 +1,18 @@
 #![feature(proc_macro_hygiene)]
 
+#![allow(unused_mut)]
+#![allow(clippy::new_without_default)]
+
 extern crate unicode_segmentation;
 extern crate sdl2;
 extern crate nfd;
 
-use sdl2::*;
+use sdl2::keyboard;
 use sdl2::event::Event;
 use sdl2::pixels::Color;
 use sdl2::rect::Rect;
 use unicode_segmentation::UnicodeSegmentation;
-use rust_macros::*;
+use rust_macros::{CTRL, ALT, SHIFT, make_binding};
 use std::time::Instant;
 use std::cmp::min;
 
@@ -19,9 +22,10 @@ pub fn print_and_return<T>(v: T) -> T where T: std::fmt::Debug {
 }
 
 pub fn panic_with_dialog<Any>(m: impl std::fmt::Display) -> Any {
+    let owned = m.to_string();
     sdl2::messagebox::show_simple_message_box(
         sdl2::messagebox::MessageBoxFlag::ERROR,
-        "uu error", &m.to_string(), None).expect(&m.to_string());
+        "uu error", &owned, None).expect(&owned);
     panic!("{}", m);
 }
 
@@ -69,12 +73,17 @@ fn main() {
                     break 'running;
                 }
                 Event::KeyDown { keycode: Some(keycode), keymod, .. } => {
-                    let mut modifs = 0u32;
+                    let mut modifs = 0_u32;
                     if keymod.contains(keyboard::Mod::LCTRLMOD) {
                         modifs |= CTRL!();
                     }
                     if keymod.contains(keyboard::Mod::RCTRLMOD) {
                         modifs |= CTRL!();
+                    }
+
+                    if false && todo!() {
+                        modifs |= ALT!();
+                        modifs |= SHIFT!();
                     }
 
                     let is_text_input = false;
@@ -83,7 +92,7 @@ fn main() {
                     }
                 }
                 Event::TextInput { text, .. } => {
-                    let mut modifs = 0u32;
+                    let mut modifs = 0_u32;
                     // TODO(ptato) Find the API that queries modifiers
                     // if keymod.contains(keyboard::Mod::LCTRLMOD) {
                     //     modifs |= keys::CONTROL;
@@ -183,6 +192,6 @@ fn main() {
 
         render.finish_frame();
 
-        ::std::thread::sleep(std::time::Duration::new(0, 1_000_000u32 / 30));
+        ::std::thread::sleep(std::time::Duration::new(0, 1_000_000_u32 / 30));
     }
 }

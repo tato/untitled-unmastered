@@ -138,7 +138,7 @@ impl Editor {
             self.matching_input_modifs = Vec::new();
         }
     }
-    fn handle_input_in_insert_mode(&mut self, render: &RenderContext) {
+    fn handle_input_in_insert_mode(&mut self, _render: &RenderContext) {
         let mut reset_matching_input = true;
 
         let mit: &str = &self.matching_input_text;
