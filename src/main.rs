@@ -16,11 +16,6 @@ use rust_macros::*;
 use std::time::{Duration,Instant};
 use std::cmp::min;
 
-pub fn print_and_return<T>(v: T) -> T where T: std::fmt::Debug {
-    println!("{:?}", v);
-    v
-}
-
 pub fn panic_with_dialog<Any>(m: impl std::fmt::Display) -> Any {
     let owned = m.to_string();
     sdl2::messagebox::show_simple_message_box(
