@@ -154,8 +154,10 @@ fn main() {
             _ => character_width,
         };
 
-        let cursor_screen_x = ((editor.cursor_x as u32) * character_width) as i32;
-        let cursor_screen_y = (((editor.cursor_y - editor.y_render_offset) as u32) * character_height) as i32;
+        let cursor = editor.cursor();
+
+        let cursor_screen_x = ((cursor.0 as u32) * character_width) as i32;
+        let cursor_screen_y = (((cursor.1 - editor.y_render_offset) as u32) * character_height) as i32;
         let cursor_target = Rect::new(
             cursor_screen_x, cursor_screen_y,
             cursor_width, character_height,
@@ -174,7 +176,7 @@ fn main() {
         render.fill_rect(status_line_rect, foreground_color).unwrap_or(());
 
         let status_text = format!(" {} > {} < $ {} {:?}",
-                                  editor.cursor_y,
+                                  cursor.1,
                                   editor.editing_file_path,
                                   editor.matching_input_text,
                                   editor.matching_input_timeout);
@@ -201,8 +203,8 @@ fn main() {
         {
             let gcs = UnicodeSegmentation::graphemes(line, true);
             for (ch_index, c) in gcs.enumerate() {
-                let character_color = if line_index == editor.cursor_y as usize
-                    && ch_index == editor.cursor_x as usize
+                let character_color = if line_index == cursor.1 as usize
+                    && ch_index == cursor.0 as usize
                     && editor.mode != editor::Mode::INSERT
                 {
                     if (elapsed_ms / cursor_color_ms_interval) % 2 == 0 {

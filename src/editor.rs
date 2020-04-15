@@ -16,8 +16,9 @@ pub struct Editor {
 
     pub editing_file_path: String,
 
-    pub cursor_x: usize,
-    pub cursor_y: usize,
+    global_cursor_x: usize,
+    actual_cursor_x: usize,
+    cursor_y: usize,
     pub cursor_animation_instant: Instant,
 
     pub matching_input_text: String,
@@ -35,7 +36,8 @@ impl Editor {
 
             editing_file_path: String::from(""),
 
-            cursor_x: 0,
+            global_cursor_x: 0,
+            actual_cursor_x: 0,
             cursor_y: 0,
             cursor_animation_instant: Instant::now(),
 
@@ -51,14 +53,14 @@ impl Editor {
             .map(|it| UnicodeSegmentation::graphemes(it, true).collect::<Vec<_>>())
             .collect();
 
-        if self.cursor_x == 0 && x < 0 {
+        if self.global_cursor_x == 0 && x < 0 {
             if self.cursor_y != 0 {
                 self.cursor_y -= 1;
-                self.cursor_x = buffer_lines.get(self.cursor_y)
+                self.global_cursor_x = buffer_lines.get(self.cursor_y)
                     .unwrap_or(&Vec::new()).len();
             }
         } else {
-            self.cursor_x = ((self.cursor_x as i32) + x) as usize;
+            self.global_cursor_x = ((self.global_cursor_x as i32) + x) as usize;
         }
 
         if self.cursor_y == 0 && y < 0 {
@@ -70,8 +72,10 @@ impl Editor {
         if self.cursor_y >= buffer_lines.len() {
             self.cursor_y = buffer_lines.len() - 1;
         }
-        if self.cursor_x >= buffer_lines[self.cursor_y].len() {
-            self.cursor_x = buffer_lines[self.cursor_y].len();
+        if self.global_cursor_x >= buffer_lines[self.cursor_y].len() {
+            self.actual_cursor_x = buffer_lines[self.cursor_y].len();
+        } else {
+            self.actual_cursor_x = self.global_cursor_x;
         }
 
         let ch = render.character_height;
@@ -91,6 +95,10 @@ impl Editor {
         self.cursor_animation_instant = Instant::now();
     }
 
+    pub fn cursor(&self) -> (usize,usize) {
+        (self.actual_cursor_x,self.cursor_y)
+    }
+
     pub fn cursor_position_in_buffer(&self) -> usize {
         let buffer_string = self.buffer.to_string();
         let buffer_lines: Vec<&str> = buffer_string
@@ -103,7 +111,7 @@ impl Editor {
             .sum::<usize>();
         let length_inside_line = UnicodeSegmentation::
             graphemes(buffer_lines[self.cursor_y], true)
-            .take(self.cursor_x)
+            .take(self.actual_cursor_x)
             .map(|gc| gc.len())
             .sum::<usize>();
         length_before_line + length_inside_line
@@ -148,7 +156,7 @@ impl Editor {
         let mim: &[u32] = &self.matching_input_modifs;
         match (mit, mim) {
             make_binding!(BACKSPACE) => {
-                if self.cursor_x != 0 || self.cursor_y != 0 {
+                if self.actual_cursor_x != 0 || self.cursor_y != 0 {
                     self.move_cursor(render, -1, 0);
                     let pos = self.cursor_position_in_buffer();
                     self.buffer.remove(pos);
@@ -158,7 +166,8 @@ impl Editor {
                 let pos = self.cursor_position_in_buffer();
                 self.buffer.insert("\n", pos);
                 self.move_cursor(render, 0, 1);
-                self.cursor_x = 0;
+                self.global_cursor_x = 0;
+                self.actual_cursor_x = 0;
             }
             make_binding!(LEFT) => self.move_cursor(render, -1, 0),
             make_binding!(RIGHT) => self.move_cursor(render, 1, 0),
