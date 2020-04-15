@@ -77,7 +77,7 @@ special_key_definitions!{
 }
 
 #[proc_macro]
-pub fn make_binding(input: TokenStream) -> TokenStream {
+pub fn binding(input: TokenStream) -> TokenStream {
     let value = input.to_string();
     let bindings: Vec<_> = value.split(',').map(str::trim).collect();
 
