@@ -37,6 +37,7 @@ modif_definitions!{
     const CTRL  = 1;
     const SHIFT = 1 << 1;
     const ALT   = 1 << 2;
+    const META  = 1 << 3;
 }
 
 macro_rules! special_key_definitions {
