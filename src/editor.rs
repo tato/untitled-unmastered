@@ -140,10 +140,28 @@ impl Editor {
         let mim: &[u32] = &self.matching_input_modifs;
         match (mit, mim) {
             binding!(i) => self.mode = Mode::INSERT,
+            binding!(a) => {
+                self.move_cursor_horizontal(1);
+                self.mode = Mode::INSERT;
+            },
             binding!(h) => self.move_cursor_horizontal(-1),
             binding!(l) => self.move_cursor_horizontal(1),
             binding!(k) => self.move_cursor_vertical(-1, render),
             binding!(j) => self.move_cursor_vertical(1, render),
+            binding!(e) | binding!(E) => {
+                loop {
+                    match self.buffer.get(self.cursor_position_in_buffer()) {
+                        None => break,
+                        Some(c) => {
+                            if c == " " || c == "\n" {
+                                self.move_cursor_horizontal(-1);
+                                break;
+                            }
+                            self.move_cursor_horizontal(1);
+                        },
+                    }
+                }
+            }
             binding!(d, d) => println!("dd is nice!"),
             binding!(CTRL+a, b, CTRL+c) => println!("abc is nice!"),
             _ => reset_matching_input = false,

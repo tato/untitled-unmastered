@@ -176,4 +176,24 @@ impl Buffer {
         }
         result
     }
+
+    pub fn get(&mut self, idx: usize) -> Option<&str> {
+        let mut current = 0;
+        for piece in &self.pieces {
+            let next = current + piece.length;
+            if idx >= current && idx < next {
+                let from = match &piece.source {
+                    ORIGINAL => &self.original,
+                    APPEND => &self.append,
+                };
+                let s = unsafe {
+                    std::str::from_utf8_unchecked(&from[piece.start..piece.length])
+                };
+                return UnicodeSegmentation::graphemes(s, true)
+                    .nth(idx - current + piece.start);
+            }
+            current = next;
+        }
+        None
+    }
 }
