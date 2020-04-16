@@ -145,7 +145,7 @@ impl Editor {
             binding!(k) => self.move_cursor_vertical(-1, render),
             binding!(j) => self.move_cursor_vertical(1, render),
             binding!(d, d) => println!("dd is nice!"),
-            binding!(CTRL|a, b, CTRL|c) => println!("abc is nice!"),
+            binding!(CTRL+a, b, CTRL+c) => println!("abc is nice!"),
             _ => reset_matching_input = false,
         }
 
@@ -178,7 +178,7 @@ impl Editor {
             binding!(RIGHT) => self.move_cursor_horizontal(1),
             binding!(UP) => self.move_cursor_vertical(-1, render),
             binding!(DOWN) => self.move_cursor_vertical(1, render),
-            binding!(CTRL|o) => {
+            binding!(CTRL+o) => {
                 let result = nfd::open_file_dialog(None, None)
                     .unwrap_or_else(panic_with_dialog);
 
@@ -189,7 +189,7 @@ impl Editor {
                     self.buffer = buffer::Buffer::from(&t);
                 }
             },
-            binding!(CTRL|s) => {
+            binding!(CTRL+s) => {
                 if !self.editing_file_path.is_empty() {
                     std::fs::write(
                         &self.editing_file_path,
@@ -197,7 +197,7 @@ impl Editor {
                 }
 
             },
-            binding!(ESCAPE) | binding!(j, k) => self.mode = Mode::NORMAL,
+            binding!(ESCAPE) | binding!(CTRL+c) => self.mode = Mode::NORMAL,
             _ if is_text_input => {
                 let pos = self.cursor_position_in_buffer();
                 self.buffer.insert(input, pos);

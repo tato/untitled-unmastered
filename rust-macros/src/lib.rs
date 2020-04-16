@@ -85,7 +85,7 @@ pub fn binding(input: TokenStream) -> TokenStream {
     let mut modifs = Vec::new();
 
     for binding in bindings {
-        let components: Vec<_> = binding.split('|').map(str::trim).collect();
+        let components: Vec<_> = binding.split('+').map(str::trim).collect();
         let mut key = "?";
         let mut modif = 0;
         for component in components {
