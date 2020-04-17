@@ -1,5 +1,3 @@
-extern crate linked_list;
-use linked_list::LinkedList;
 use crate::*;
 use std::ptr;
 
@@ -16,16 +14,17 @@ struct Piece {
     length: usize,
     source: PieceSource,
 
-    next: Option<Box<Piece>>,
-    prev: *const Piece,
+    next: *mut Piece,
+    prev: *mut Piece,
 }
 pub struct Buffer {
     original: Vec<u8>,
     append: Vec<u8>,
 
-    pieces_count: usize,
-    head: Option<Box<Piece>>,
-    tail: *const Piece,
+    nodes_count: usize,
+    nodes: Vec<Piece>,
+    head: *mut Piece,
+    tail: *mut Piece,
 }
 
 impl Buffer {
@@ -36,28 +35,116 @@ impl Buffer {
             length: source.len(),
             source: ORIGINAL,
 
-            next: None,
-            prev: ptr::null(),
+            next: ptr::null_mut(),
+            prev: ptr::null_mut(),
         };
+
+        let mut  nodes = Vec::new();
+        nodes.push(first_piece);
+
+        let node_ptr = &mut nodes[0] as *mut Piece;
 
         let mut result = Self {
             original: source.to_string().into_bytes(),
             append: Vec::new(),
 
-            pieces_count: 1,
-            head: Some(first_piece.into()),
-            tail: ptr::null(),
+            nodes_count: 1,
+            nodes,
+            head: node_ptr,
+            tail: node_ptr,
         };
 
-        result.tail = result.head.as_ref().unwrap().as_ref() as *const Piece;
-
         result
+    }
+
+    pub fn insert(&mut self, text: &str, insert_position: usize) {
+        let start = self.append.len();
+        let mut length = 0;
+        for c in text.bytes() {
+            self.append.push(c);
+            length += 1;
+        }
+
+        debug_assert!(self.nodes_count != 0);
+
+        let mut search_position = 0;
+        let mut iter_pieces = self.head;
+        while !iter_pieces.is_null() {
+            let piece = unsafe { &*iter_pieces };
+            let piece_position_start = search_position;
+            search_position += piece.length;
+            let piece_position_end = search_position;
+
+            if search_position >= insert_position {
+                let piece_start = piece.start;
+                let piece_source = piece.source;
+
+                // remove the node
+                let mut piece_next = ptr::null_mut();
+                if iter_pieces != self.head {
+                    let prev = unsafe { &mut *piece.prev };
+                    prev.next = piece.next;
+                } else {
+                    debug_assert!(!piece.next.is_null());
+                    self.head = piece.next;
+                }
+
+                if iter_pieces != self.tail {
+                    let next = unsafe { &mut *piece.next };
+                    next.prev = piece.prev;
+                } else {
+                    debug_assert!(!piece.prev.is_null());
+                    self.tail = piece.prev;
+                }
+                todo!("free the node in the vec :-(");
+                self.nodes_count -= 1;
+
+
+                if insert_position != piece_position_end - 1 {
+                    let start = piece_start + insert_position - piece_position_start;
+                    let length = piece_position_end - insert_position;
+                    let source = piece_source;
+                    if length > 0 {
+
+                    }
+                    // if after.length > 0 {
+                    //     cursor.insert(after);
+                    // }
+                }
+
+                todo!();
+                // let new = Piece {
+                //     start,
+                //     length,
+                //     source: APPEND,
+                // };
+                // if new.length > 0 {
+                //     cursor.insert(new);
+                // }
+
+                if insert_position != piece_position_start {
+                    todo!();
+                    // let before = Piece {
+                    //     start: piece_start,
+                    //     length: insert_position - piece_position_start,
+                    //     source: piece_source,
+                    // };
+                    // if before.length > 0 {
+                    //     cursor.insert(before);
+                    // }
+                }
+                break;
+            }
+
+            iter_pieces = piece.next;
+        }
     }
 
     pub fn remove(&mut self, position: usize) {
         let mut start_in_render = 0;
         let mut iter_pieces = self.head;
-        while let Some(piece) = iter_pieces {
+        while !iter_pieces.is_null() {
+            let piece = unsafe { &*iter_pieces };
             let end_in_render = start_in_render + piece.length;
             let remove_offset = position - start_in_render;
             if position >= end_in_render {
@@ -113,82 +200,11 @@ impl Buffer {
         }
     }
 
-    pub fn insert(&mut self, text: &str, insert_position: usize) {
-        let start = self.append.len();
-        let mut length = 0;
-        for c in text.bytes() {
-            self.append.push(c);
-            length += 1;
-        }
-
-        todo!();
-        // if self.pieces.is_empty() {
-        //     self.pieces.push_back(Piece {
-        //         start,
-        //         length,
-        //         source: APPEND,
-        //     });
-        // }
-
-        let mut search_position = 0;
-        let mut iter_pieces = self.head;
-        while let Some(piece) = iter_pieces {
-            let piece_position_start = search_position;
-            search_position += piece.length;
-            let piece_position_end = search_position;
-
-            if search_position >= insert_position {
-                let piece_start = piece.start;
-                let piece_source = piece.source;
-
-                todo!();
-                // cursor.prev();
-                // cursor.remove();
-
-                if insert_position != piece_position_end - 1 {
-                    todo!();
-                    // let after = Piece {
-                    //     start: piece_start + insert_position - piece_position_start,
-                    //     length: piece_position_end - insert_position,
-                    //     source: piece_source,
-                    // };
-                    // if after.length > 0 {
-                    //     cursor.insert(after);
-                    // }
-                }
-
-                todo!();
-                // let new = Piece {
-                //     start,
-                //     length,
-                //     source: APPEND,
-                // };
-                // if new.length > 0 {
-                //     cursor.insert(new);
-                // }
-
-                if insert_position != piece_position_start {
-                    todo!();
-                    // let before = Piece {
-                    //     start: piece_start,
-                    //     length: insert_position - piece_position_start,
-                    //     source: piece_source,
-                    // };
-                    // if before.length > 0 {
-                    //     cursor.insert(before);
-                    // }
-                }
-                break;
-            }
-
-            iter_pieces = piece.next;
-        }
-    }
-
     pub fn to_string(&self) -> String {
         let mut result = String::new();
         let mut iter_pieces = self.head;
-        while let Some(piece) = iter_pieces {
+        while iter_pieces.is_null() {
+            let piece = unsafe { &*iter_pieces };
             let from = match &piece.source {
                 ORIGINAL => &self.original,
                 APPEND => &self.append,
@@ -203,7 +219,8 @@ impl Buffer {
     pub fn get(&mut self, idx: usize) -> Option<&str> {
         let mut current = 0;
         let mut iter_pieces = self.head;
-        while let Some(piece) = iter_pieces {
+        while iter_pieces.is_null() {
+            let piece = unsafe { &*iter_pieces };
             let next = current + piece.length;
             if idx >= current && idx < next {
                 let from = match &piece.source {
