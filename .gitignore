@@ -3,3 +3,4 @@
 .*.swp
 SDL2*.zip
 SDL2*.tar.gz
+*.exe
