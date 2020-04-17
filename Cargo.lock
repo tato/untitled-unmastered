@@ -92,7 +92,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "linked-list"
 version = "0.0.3"
-source = "git+https://github.com/contain-rs/linked-list?rev=8c1931c#8c1931c74cf4cb4ad829593965e3b5101cfb4672"
 
 [[package]]
 name = "memchr"
@@ -202,7 +201,7 @@ dependencies = [
 name = "uu"
 version = "1.0.0"
 dependencies = [
- "linked-list 0.0.3 (git+https://github.com/contain-rs/linked-list?rev=8c1931c)",
+ "linked-list 0.0.3",
  "nfd 0.0.4 (git+https://github.com/saurvs/nfd-rs?rev=07578c5)",
  "rust-macros 1.0.0",
  "sdl2 0.33.0 (git+https://github.com/Rust-SDL2/rust-sdl2.git)",
@@ -250,7 +249,6 @@ dependencies = [
 "checksum gcc 0.3.55 (registry+https://github.com/rust-lang/crates.io-index)" = "8f5f3913fa0bfe7ee1fd8248b6b9f42a5af4b9d65ec2dd2c3c26132b950ecfc2"
 "checksum lazy_static 1.4.0 (registry+https://github.com/rust-lang/crates.io-index)" = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 "checksum libc 0.2.66 (registry+https://github.com/rust-lang/crates.io-index)" = "d515b1f41455adea1313a4a2ac8a8a477634fbae63cc6100e3aebb207ce61558"
-"checksum linked-list 0.0.3 (git+https://github.com/contain-rs/linked-list?rev=8c1931c)" = "<none>"
 "checksum memchr 2.3.3 (registry+https://github.com/rust-lang/crates.io-index)" = "3728d817d99e5ac407411fa471ff9800a778d88a24685968b36824eaf4bee400"
 "checksum miniz_oxide 0.3.6 (registry+https://github.com/rust-lang/crates.io-index)" = "aa679ff6578b1cddee93d7e82e263b94a575e0bfced07284eb0c037c1d2416a5"
 "checksum nfd 0.0.4 (git+https://github.com/saurvs/nfd-rs?rev=07578c5)" = "<none>"

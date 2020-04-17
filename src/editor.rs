@@ -31,7 +31,7 @@ impl Editor {
         Self {
             mode: Mode::NORMAL,
 
-            buffer: buffer::Buffer::new(),
+            buffer: buffer::Buffer::from(""),
             y_render_offset: 0,
 
             editing_file_path: String::from(""),
