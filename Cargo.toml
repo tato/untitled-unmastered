@@ -8,8 +8,8 @@ edition = "2018"
 [profile.release]
 debug = true
 
-[dependencies.rust-macros]
-path = "rust-macros"
+[dependencies.uu-rust-macros]
+path = "uu-rust-macros"
 
 [dependencies.unicode-segmentation]
 version = "1.3"
