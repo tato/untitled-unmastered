@@ -2,10 +2,6 @@
 
 #![allow(clippy::new_without_default)]
 
-extern crate unicode_segmentation;
-extern crate sdl2;
-extern crate nfd;
-
 use sdl2::keyboard;
 use sdl2::keyboard::Keycode;
 use sdl2::event::Event;
