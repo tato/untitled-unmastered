@@ -44,13 +44,11 @@ impl Buffer {
             prev: INVALID_NODE_INDEX,
         };
 
-        let mut result = Self {
+        Self {
             original: source.to_string().into_bytes(),
             append: Vec::new(),
             pieces: PieceList::new(first_piece),
-        };
-
-        result
+        }
     }
 
     pub fn insert(&mut self, text: &str, insert_position: usize) {
@@ -188,6 +186,8 @@ impl Buffer {
 
 impl PieceList {
     fn new(first_piece: Piece) -> Self {
+        todo!(".head and .tail are never being updated...");
+
         let mut nodes = Vec::new();
         nodes.push(first_piece);
 
@@ -245,7 +245,7 @@ struct PieceCursor<'b> {
 }
 impl<'b> PieceCursor<'b> {
     fn next(&mut self) -> Option<&mut Piece> {
-        let (next_idx, prev_idx) = self.next_prev_idx;
+        let (next_idx, _) = self.next_prev_idx;
         if next_idx != INVALID_NODE_INDEX {
             let result = &mut self.list.nodes[next_idx];
             self.next_prev_idx = (result.next, next_idx);
@@ -255,7 +255,7 @@ impl<'b> PieceCursor<'b> {
         }
     }
     fn prev(&mut self) -> Option<&mut Piece> {
-        let (next_idx, prev_idx) = self.next_prev_idx;
+        let (_, prev_idx) = self.next_prev_idx;
         if prev_idx != INVALID_NODE_INDEX {
             let result = &mut self.list.nodes[prev_idx];
             self.next_prev_idx = (prev_idx, result.prev);
@@ -294,7 +294,7 @@ impl<'b> PieceCursor<'b> {
             next: next_idx, prev: prev_idx, 
         };
 
-        let mut piece_idx = INVALID_NODE_INDEX;
+        let piece_idx;
         if self.list.free != INVALID_NODE_INDEX {
             piece_idx = self.list.free;
             self.list.free = self.list.nodes[piece_idx].next;
