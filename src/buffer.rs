@@ -1,5 +1,4 @@
 use crate::*;
-use std::ptr;
 
 #[derive(Copy, Clone, Debug)]
 enum PieceSource {
@@ -23,6 +22,7 @@ struct PieceList {
     nodes: Vec<Piece>,
     head: usize,
     tail: usize,
+    free: usize,
 }
 
 const INVALID_NODE_INDEX: usize = std::usize::MAX;
@@ -196,6 +196,7 @@ impl PieceList {
             nodes,
             head: 0,
             tail: 0,
+            free: INVALID_NODE_INDEX,
         }
     }
 
@@ -266,12 +267,54 @@ impl<'b> PieceCursor<'b> {
     fn remove_prev(&mut self) {
         let (next_idx, prev_idx) = self.next_prev_idx;
         if prev_idx != INVALID_NODE_INDEX {
-            todo!();
+            let prev_of_prev_idx = self.list.nodes[prev_idx].prev;
+            let next_of_prev_idx = self.list.nodes[prev_idx].next;
+
+            if prev_of_prev_idx != INVALID_NODE_INDEX {
+                let prev_of_prev = &mut self.list.nodes[prev_of_prev_idx];
+                prev_of_prev.next = next_of_prev_idx;
+            }
+
+            if next_of_prev_idx != INVALID_NODE_INDEX {
+                let next = &mut self.list.nodes[next_idx];
+                next.prev = prev_of_prev_idx;
+            }
+
+            self.next_prev_idx = (next_of_prev_idx, prev_of_prev_idx);
+
+            self.list.nodes[prev_idx].next = self.list.free;
+            self.list.free = prev_idx;
         }
     }
     fn insert_before(&mut self,
                      start: usize, length: usize, source: PieceSource) {
-        todo!();
+        let (next_idx, prev_idx) = self.next_prev_idx;
+        let piece = Piece {
+            start, length, source,
+            next: next_idx, prev: prev_idx, 
+        };
+
+        let mut piece_idx = INVALID_NODE_INDEX;
+        if self.list.free != INVALID_NODE_INDEX {
+            piece_idx = self.list.free;
+            self.list.free = self.list.nodes[piece_idx].next;
+            self.list.nodes[piece_idx] = piece;
+        } else {
+            piece_idx = self.list.nodes.len();
+            self.list.nodes.push(piece);
+        }
+
+        if prev_idx != INVALID_NODE_INDEX {
+            let prev = &mut self.list.nodes[prev_idx];
+            prev.next = piece_idx;
+        }
+
+        if next_idx != INVALID_NODE_INDEX {
+            let next = &mut self.list.nodes[next_idx];
+            next.prev = piece_idx;
+        }
+
+        self.next_prev_idx = (next_idx, piece_idx);
     }
 }
 

@@ -90,10 +90,6 @@ version = "0.2.66"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
-name = "linked-list"
-version = "0.0.3"
-
-[[package]]
 name = "memchr"
 version = "2.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -201,7 +197,6 @@ dependencies = [
 name = "uu"
 version = "1.0.0"
 dependencies = [
- "linked-list 0.0.3",
  "nfd 0.0.4 (git+https://github.com/saurvs/nfd-rs?rev=07578c5)",
  "rust-macros 1.0.0",
  "sdl2 0.33.0 (git+https://github.com/Rust-SDL2/rust-sdl2.git)",
