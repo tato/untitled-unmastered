@@ -150,7 +150,7 @@ fn main() {
             _ => character_width,
         };
 
-        let cursor = editor.cursor();
+        let cursor = editor.buffer.cursor();
 
         let cursor_screen_x = ((cursor.0 as u32) * character_width) as i32;
         let cursor_screen_y = (((cursor.1 - editor.y_render_offset) as u32) * character_height) as i32;

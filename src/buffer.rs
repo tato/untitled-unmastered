@@ -31,6 +31,10 @@ pub struct Buffer {
     original: Vec<u8>,
     append: Vec<u8>,
     pieces: PieceList,
+
+    reminder_cursor_x: usize,
+    cursor_x: usize,
+    cursor_y: usize,
 }
 
 impl Buffer {
@@ -48,6 +52,10 @@ impl Buffer {
             original: source.to_string().into_bytes(),
             append: Vec::new(),
             pieces: PieceList::new(first_piece),
+
+            reminder_cursor_x: 0,
+            cursor_x: 0,
+            cursor_y: 0,
         }
     }
 
@@ -145,6 +153,8 @@ impl Buffer {
         }
     }
 
+    // todo! this function should never be necessary
+    // but it's easier to implement than the alternatives for now
     pub fn to_string(&self) -> String {
         let mut result = String::new();
         for piece in self.pieces.iter() {
@@ -156,6 +166,71 @@ impl Buffer {
             result += std::str::from_utf8(sl).unwrap_or_else(panic_with_dialog);
         }
         result
+    }
+
+    pub fn move_cursor_horizontal(&mut self, x: i64) {
+        // todo!: don't use to_string
+        let length_of_line = self
+            .to_string()
+            .split('\n')
+            .nth(self.cursor_y)
+            .map(|it| UnicodeSegmentation::graphemes(it, true).count())
+            .unwrap_or(0);
+
+        let moving_beyond_first = x < 0 && self.cursor_x == 0;
+        let moving_beyond_last = x > 0 && self.cursor_x+1 >= length_of_line;
+
+        if !moving_beyond_first && !moving_beyond_last {
+            self.cursor_x = ((self.cursor_x as i64) + x) as usize;
+            self.reminder_cursor_x = self.cursor_x;
+        }
+
+    }
+
+    pub fn move_cursor_vertical(&mut self, y: i64) {
+        // todo!: don't use to_string
+        let buffer_string = self.to_string();
+        let buffer_lines: Vec<_> = buffer_string
+            .split('\n')
+            .collect();
+
+        let moving_beyond_first = y < 0 && self.cursor_y == 0;
+        let moving_beyond_last = y > 0 && self.cursor_y+1 >= buffer_lines.len();
+
+        if !moving_beyond_first && !moving_beyond_last {
+            self.cursor_y = ((self.cursor_y as i64) + y) as usize;
+        }
+
+        let mut length_of_line = UnicodeSegmentation::graphemes(buffer_lines[self.cursor_y], true).count();
+        if length_of_line == 0 {
+            self.cursor_x = 0;
+        } else {
+            self.cursor_x = min(self.reminder_cursor_x, length_of_line - 1);
+        }
+    }
+
+    pub fn cursor(&self) -> (usize,usize) {
+        (self.cursor_x,self.cursor_y)
+    }
+
+    // todo! this should not be necessary
+    // we should be able to .insert_after_cursor() or whatever
+    pub fn cursor_position_in_buffer(&self) -> usize {
+        let buffer_string = self.to_string();
+        let buffer_lines: Vec<&str> = buffer_string
+            .split('\n')
+            .take(self.cursor_y + 1)
+            .collect();
+        let length_before_line = buffer_lines[0..self.cursor_y]
+            .iter()
+            .map(|t| t.len() + 1)
+            .sum::<usize>();
+        let length_inside_line = UnicodeSegmentation::
+            graphemes(buffer_lines[self.cursor_y], true)
+            .take(self.cursor_x)
+            .map(|gc| gc.len())
+            .sum::<usize>();
+        length_before_line + length_inside_line
     }
 
     pub fn get(&mut self, idx: usize) -> Option<&str> {
@@ -186,8 +261,6 @@ impl Buffer {
 
 impl PieceList {
     fn new(first_piece: Piece) -> Self {
-        todo!(".head and .tail are never being updated...");
-
         let mut nodes = Vec::new();
         nodes.push(first_piece);
 
@@ -268,19 +341,22 @@ impl<'b> PieceCursor<'b> {
         let (next_idx, prev_idx) = self.next_prev_idx;
         if prev_idx != INVALID_NODE_INDEX {
             let prev_of_prev_idx = self.list.nodes[prev_idx].prev;
-            let next_of_prev_idx = self.list.nodes[prev_idx].next;
 
             if prev_of_prev_idx != INVALID_NODE_INDEX {
                 let prev_of_prev = &mut self.list.nodes[prev_of_prev_idx];
-                prev_of_prev.next = next_of_prev_idx;
+                prev_of_prev.next = next_idx;
+            } else {
+                self.list.head = next_idx;
             }
 
-            if next_of_prev_idx != INVALID_NODE_INDEX {
+            if next_idx != INVALID_NODE_INDEX {
                 let next = &mut self.list.nodes[next_idx];
                 next.prev = prev_of_prev_idx;
+            } else {
+                self.list.tail = prev_of_prev_idx;
             }
 
-            self.next_prev_idx = (next_of_prev_idx, prev_of_prev_idx);
+            self.next_prev_idx = (next_idx, prev_of_prev_idx);
 
             self.list.nodes[prev_idx].next = self.list.free;
             self.list.free = prev_idx;
@@ -291,7 +367,7 @@ impl<'b> PieceCursor<'b> {
         let (next_idx, prev_idx) = self.next_prev_idx;
         let piece = Piece {
             start, length, source,
-            next: next_idx, prev: prev_idx, 
+            next: next_idx, prev: prev_idx,
         };
 
         let piece_idx;
@@ -307,11 +383,15 @@ impl<'b> PieceCursor<'b> {
         if prev_idx != INVALID_NODE_INDEX {
             let prev = &mut self.list.nodes[prev_idx];
             prev.next = piece_idx;
+        } else {
+            self.list.head = piece_idx;
         }
 
         if next_idx != INVALID_NODE_INDEX {
             let next = &mut self.list.nodes[next_idx];
             next.prev = piece_idx;
+        } else {
+            self.list.tail = piece_idx;
         }
 
         self.next_prev_idx = (next_idx, piece_idx);
