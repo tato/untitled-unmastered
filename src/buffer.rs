@@ -7,7 +7,7 @@ enum PieceSource {
 }
 use PieceSource::*;
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 struct Piece {
     start: usize,
     length: usize,
@@ -35,6 +35,8 @@ pub struct Buffer {
     reminder_cursor_x: usize,
     cursor_x: usize,
     cursor_y: usize,
+
+    piece_under_cursor: usize,
 }
 
 impl Buffer {
@@ -56,10 +58,13 @@ impl Buffer {
             reminder_cursor_x: 0,
             cursor_x: 0,
             cursor_y: 0,
+
+            piece_under_cursor: 0,
         }
     }
 
     pub fn insert(&mut self, text: &str, insert_position: usize) {
+        todo!("self.piece_under_cursor");
         let start = self.append.len();
         let mut length = 0;
         for c in text.bytes() {
@@ -107,7 +112,52 @@ impl Buffer {
         }
     }
 
+    pub fn insert_under_cursor(&mut self, text: &str) {
+        debug_assert!(self.pieces.len() != 0);
+
+        let start = self.append.len();
+        let length = text.len();
+        self.append.extend_from_slice(text.as_bytes());
+
+        let piece = match self.pieces.get_by_id(self.piece_under_cursor) {
+            None => panic_with_dialog("unexpected error 😳"),
+            Some(piece) => piece,
+        };
+
+        let piece_start = piece.start;
+        let piece_source = piece.source;
+
+        let insert_position = todo!("something to do with cursor_x cursor_y and so on");
+
+        if insert_position != piece_position_start {
+            let start = piece_start;
+            let length = insert_position - piece_position_start;
+            if length > 0 {
+                self.pieces.insert_before(self.piece_under_cursor,
+                                          start, length, piece_source);
+            }
+        }
+
+        if length > 0 {
+            self.pieces.insert_before(self.piece_under_cursor,
+                                      start, length, APPEND);
+        }
+
+        if insert_position != piece_position_end - 1 {
+            let start = piece_start + insert_position - piece_position_start;
+            let length = piece_position_end - insert_position;
+            if length > 0 {
+                self.pieces.insert_before(self.piece_under_cursor,
+                                          start, length, piece_source);
+            }
+        }
+
+        self.pieces.remove(self.piece_under_cursor);
+        todo!("self.piece_under_cursor = ...;");
+    }
+
     pub fn remove(&mut self, position: usize) {
+        todo!("self.piece_under_cursor");
         let mut start_in_render = 0;
         let mut cursor = self.pieces.cursor();
         while let Some(piece) = cursor.next() {
@@ -284,6 +334,77 @@ impl PieceList {
         }
     }
 
+    fn get_by_id(&self, pivot_id: usize) -> Option<Piece> {
+        todo!();
+    }
+
+    fn insert_before(&mut self, pivot_id: usize, start: usize, length: usize, source: PieceSource) -> usize {
+        debug_assert!(pivot_id != INVALID_NODE_INDEX);
+
+        let pivot = &self.nodes.get(pivot_id).unwrap();
+        let prev_idx = pivot.prev;
+        let next_idx = pivot.next;
+
+        let piece = Piece {
+            start, length, source,
+            next: next_idx, prev: prev_idx,
+        };
+
+        let piece_idx;
+        if self.free != INVALID_NODE_INDEX {
+            piece_idx = self.free;
+            self.free = self.nodes[piece_idx].next;
+            self.nodes[piece_idx] = piece;
+        } else {
+            piece_idx = self.nodes.len();
+            self.nodes.push(piece);
+        }
+
+        if prev_idx != INVALID_NODE_INDEX {
+            let prev = &mut self.nodes[prev_idx];
+            prev.next = piece_idx;
+        } else {
+            self.head = piece_idx;
+        }
+
+        if next_idx != INVALID_NODE_INDEX {
+            let next = &mut self.nodes[next_idx];
+            next.prev = piece_idx;
+        } else {
+            self.tail = piece_idx;
+        }
+
+        piece_idx
+    }
+
+    fn remove(&mut self, elem_id: usize) -> Piece {
+        debug_assert!(elem_id != INVALID_NODE_INDEX);
+
+        let prev_idx = self.nodes[elem_id].prev;
+        let next_idx = self.nodes[elem_id].next;
+
+        if prev_idx != INVALID_NODE_INDEX {
+            let prev = &mut self.nodes[prev_idx];
+            prev.next = next_idx;
+        } else {
+            self.head = next_idx;
+        }
+
+        if next_idx != INVALID_NODE_INDEX {
+            let next = &mut self.nodes[next_idx];
+            next.prev = prev_idx;
+        } else {
+            self.tail = prev_idx;
+        }
+
+        let result = self.nodes[elem_id].clone();
+
+        self.nodes[elem_id].next = self.free;
+        self.free = elem_id;
+
+        result
+    }
+
     fn cursor(&mut self) -> PieceCursor {
         PieceCursor {
             next_prev_idx: (self.head, INVALID_NODE_INDEX),
@@ -338,62 +459,16 @@ impl<'b> PieceCursor<'b> {
         }
     }
     fn remove_prev(&mut self) {
-        let (next_idx, prev_idx) = self.next_prev_idx;
+        let (_, prev_idx) = self.next_prev_idx;
         if prev_idx != INVALID_NODE_INDEX {
-            let prev_of_prev_idx = self.list.nodes[prev_idx].prev;
-
-            if prev_of_prev_idx != INVALID_NODE_INDEX {
-                let prev_of_prev = &mut self.list.nodes[prev_of_prev_idx];
-                prev_of_prev.next = next_idx;
-            } else {
-                self.list.head = next_idx;
-            }
-
-            if next_idx != INVALID_NODE_INDEX {
-                let next = &mut self.list.nodes[next_idx];
-                next.prev = prev_of_prev_idx;
-            } else {
-                self.list.tail = prev_of_prev_idx;
-            }
-
-            self.next_prev_idx = (next_idx, prev_of_prev_idx);
-
-            self.list.nodes[prev_idx].next = self.list.free;
-            self.list.free = prev_idx;
+            let removed = self.list.remove(prev_idx);
+            self.next_prev_idx = (removed.next, removed.prev);
         }
     }
     fn insert_before(&mut self,
                      start: usize, length: usize, source: PieceSource) {
-        let (next_idx, prev_idx) = self.next_prev_idx;
-        let piece = Piece {
-            start, length, source,
-            next: next_idx, prev: prev_idx,
-        };
-
-        let piece_idx;
-        if self.list.free != INVALID_NODE_INDEX {
-            piece_idx = self.list.free;
-            self.list.free = self.list.nodes[piece_idx].next;
-            self.list.nodes[piece_idx] = piece;
-        } else {
-            piece_idx = self.list.nodes.len();
-            self.list.nodes.push(piece);
-        }
-
-        if prev_idx != INVALID_NODE_INDEX {
-            let prev = &mut self.list.nodes[prev_idx];
-            prev.next = piece_idx;
-        } else {
-            self.list.head = piece_idx;
-        }
-
-        if next_idx != INVALID_NODE_INDEX {
-            let next = &mut self.list.nodes[next_idx];
-            next.prev = piece_idx;
-        } else {
-            self.list.tail = piece_idx;
-        }
-
+        let (next_idx, _) = self.next_prev_idx;
+        let piece_idx = self.list.insert_before(next_idx, start, length, source);
         self.next_prev_idx = (next_idx, piece_idx);
     }
 }
