@@ -165,9 +165,7 @@ impl Editor {
             },
             binding!(ESCAPE) | binding!(CTRL+c) => self.mode = Mode::NORMAL,
             _ if is_text_input => {
-                let pos = self.buffer.cursor_position_in_buffer();
-                self.buffer.insert(input, pos);
-                self.move_cursor_horizontal(1);
+                self.buffer.insert_under_cursor(input);
             },
             _ => reset_matching_input = false,
         }
