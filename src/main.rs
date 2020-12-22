@@ -1,5 +1,3 @@
-#![feature(proc_macro_hygiene)]
-
 #![allow(clippy::new_without_default)]
 
 use sdl2::keyboard;
