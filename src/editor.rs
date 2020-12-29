@@ -1,6 +1,5 @@
 use crate::*;
 use crate::render::RenderContext;
-use unicode_segmentation::UnicodeSegmentation;
 
 #[derive(PartialEq)]
 pub enum Mode {
@@ -62,8 +61,6 @@ impl Editor {
         {
             self.y_render_offset -= (-y) as usize;
         }
-        //todo!;
-        //self.y_render_offset = min(self.y_render_offset, buffer_lines.len());
 
         self.cursor_animation_instant = Instant::now();
     }
@@ -96,16 +93,12 @@ impl Editor {
             binding!(j) => self.move_cursor_vertical(1, render),
             binding!(e) | binding!(E) => {
                 loop {
-                    match self.buffer.get(self.buffer.cursor_position_in_buffer()) {
-                        None => break,
-                        Some(c) => {
-                            if c == " " || c == "\n" {
-                                self.move_cursor_horizontal(-1);
-                                break;
-                            }
-                            self.move_cursor_horizontal(1);
-                        },
+                    let c = self.buffer.get_under_cursor();
+                    if c == " " || c == "\n" {
+                        self.move_cursor_horizontal(-1);
+                        break;
                     }
+                    self.move_cursor_horizontal(1);
                 }
             }
             binding!(d, d) => println!("dd is nice!"),
@@ -125,20 +118,10 @@ impl Editor {
         let mim: &[u32] = &self.matching_input_modifs;
         match (mit, mim) {
             binding!(BACKSPACE) => {
-                todo!();
-                // if self.actual_cursor_x != 0 || self.cursor_y != 0 {
-                //     self.move_cursor_horizontal(-1);
-                //     let pos = self.buffer.cursor_position_in_buffer();
-                //     self.buffer.remove(pos);
-                // }
+                self.buffer.delete_under_cursor();
             }
             binding!(RETURN) => {
-                todo!();
-                // let pos = self.buffer.cursor_position_in_buffer);
-                // self.buffer.insert("\n", pos);
-                // self.move_cursor_vertical(1, render);
-                // self.global_cursor_x = 0;
-                // self.actual_cursor_x = 0;
+                self.buffer.insert_under_cursor("\n");
             }
             binding!(LEFT) => self.move_cursor_horizontal(-1),
             binding!(RIGHT) => self.move_cursor_horizontal(1),
