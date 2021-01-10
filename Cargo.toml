@@ -14,11 +14,13 @@ path = "uu-rust-macros"
 [dependencies.unicode-segmentation]
 version = "1.3"
 
-[dependencies.sdl2]
-git = "https://github.com/Rust-SDL2/rust-sdl2.git"
-default-features = false
-features = [ "bundled", "ttf" ]
-
 [dependencies.nfd] # native file dialogs
 git = "https://github.com/saurvs/nfd-rs"
 rev = "07578c5"
+
+[dependencies.imgui]
+version = "*"
+[dependencies.imgui-glium-renderer]
+version = "*"
+[dependencies.imgui-winit-support]
+version = "*"
