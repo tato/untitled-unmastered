@@ -18,9 +18,11 @@ version = "1.3"
 git = "https://github.com/saurvs/nfd-rs"
 rev = "07578c5"
 
+[dependencies.glium]
+version = "0"
 [dependencies.imgui]
-version = "*"
+version = "0"
 [dependencies.imgui-glium-renderer]
-version = "*"
+version = "0"
 [dependencies.imgui-winit-support]
-version = "*"
+version = "0"
