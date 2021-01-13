@@ -21,8 +21,8 @@ rev = "07578c5"
 [dependencies.glium]
 version = "0"
 [dependencies.imgui]
-version = "0"
+path = "imgui-rs/imgui"
 [dependencies.imgui-glium-renderer]
-version = "0"
+path = "imgui-rs/imgui-glium-renderer"
 [dependencies.imgui-winit-support]
-version = "0"
+path = "imgui-rs/imgui-winit-support"
