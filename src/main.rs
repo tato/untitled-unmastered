@@ -76,6 +76,11 @@ fn main() {
     let hidpi_factor = platform.hidpi_factor();
     let font_size = (13.0 * hidpi_factor) as f32;
     imgui.fonts().add_font(&[
+        FontSource::TtfData {
+            data: include_bytes!("Cousine-Regular.ttf"),
+            size_pixels: font_size,
+            config: Some(FontConfig::default()),
+        },
         FontSource::DefaultFontData {
             config: Some(FontConfig {
                 size_pixels: font_size,
@@ -83,7 +88,7 @@ fn main() {
             }),
         },
         FontSource::TtfData {
-            data: include_bytes!("Cousine-Regular.ttf"),
+            data: include_bytes!("mplus-1p-regular.ttf"),
             size_pixels: font_size,
             config: Some(FontConfig {
                 rasterizer_multiply: 1.75,
