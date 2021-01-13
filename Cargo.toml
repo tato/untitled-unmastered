@@ -26,3 +26,5 @@ version = "0"
 version = "0"
 [dependencies.imgui-winit-support]
 version = "0"
+[dependencies.clipboard]
+version = "0"
