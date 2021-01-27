@@ -45,6 +45,17 @@ pub mod render;
 pub mod wacky;
 use wacky::*;
 
+pub struct IO {
+    mouse_position: [f32; 2],
+}
+impl Default for IO {
+    fn default() -> Self {
+        Self {
+            mouse_position: Default::default(),
+        }
+    }
+}
+
 fn main() {
     let el = EventLoop::new();
 
@@ -74,9 +85,9 @@ fn main() {
     let start = Instant::now();
     let mut prevt = start;
 
-    let mut mousex = 0.0;
-    let mut mousey = 0.0;
     let mut dragging = false;
+
+    let mut io: IO = Default::default();
 
     el.run(move |event, _, control_flow| {
         let window = windowed_context.window();
@@ -98,7 +109,7 @@ fn main() {
                         let p0 = canvas
                             .transform()
                             .inversed()
-                            .transform_point(mousex, mousey);
+                            .transform_point(io.mouse_position[0], io.mouse_position[1]);
                         let p1 = canvas
                             .transform()
                             .inversed()
@@ -107,8 +118,8 @@ fn main() {
                         canvas.translate(p1.0 - p0.0, p1.1 - p0.1);
                     }
 
-                    mousex = position.x as f32;
-                    mousey = position.y as f32;
+                    io.mouse_position[0] = position.x as f32;
+                    io.mouse_position[1] = position.y as f32;
                 }
                 WindowEvent::MouseWheel {
                     device_id: _,
@@ -119,7 +130,7 @@ fn main() {
                         let pt = canvas
                             .transform()
                             .inversed()
-                            .transform_point(mousex, mousey);
+                            .transform_point(io.mouse_position[0], io.mouse_position[1]);
                         canvas.translate(pt.0, pt.1);
                         canvas.scale(1.0 + (y / 10.0), 1.0 + (y / 10.0));
                         canvas.translate(-pt.0, -pt.1);
@@ -162,9 +173,9 @@ fn main() {
                 let pt = canvas
                     .transform()
                     .inversed()
-                    .transform_point(mousex, mousey);
-                let mousex = pt.0;
-                let mousey = pt.1;
+                    .transform_point(io.mouse_position[0], io.mouse_position[1]);
+                let io.mouse_position[0] = pt.0;
+                let io.mouse_position[1] = pt.1;
 
                 draw_graph(&mut canvas, 0.0, height / 2.0, width, height / 2.0, t);
 
@@ -174,8 +185,8 @@ fn main() {
                     50.0,
                     150.0,
                     100.0,
-                    mousex,
-                    mousey,
+                    io.mouse_position[0],
+                    io.mouse_position[1],
                     t,
                 );
 
@@ -186,15 +197,15 @@ fn main() {
                     50.0,
                     150.0,
                     100.0,
-                    mousex,
-                    mousey,
+                    io.mouse_position[0],
+                    io.mouse_position[1],
                 );
 
                 draw_colorwheel(&mut canvas, width - 300.0, height - 350.0, 250.0, 250.0, t);
 
                 draw_lines(&mut canvas, 120.0, height - 50.0, 600.0, 50.0, t);
                 draw_widths(&mut canvas, 10.0, 50.0, 30.0);
-                draw_fills(&mut canvas, width - 200.0, height - 100.0, mousex, mousey);
+                draw_fills(&mut canvas, width - 200.0, height - 100.0, io.mouse_position[0], io.mouse_position[1]);
                 draw_caps(&mut canvas, 10.0, 300.0, 30.0);
 
                 draw_scissor(&mut canvas, 50.0, height - 80.0, t);
