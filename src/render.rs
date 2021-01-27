@@ -2,14 +2,14 @@
 // use sdl2::rect::Rect;
 // use sdl2::surface::Surface;
 // use sdl2::*;
-use std::collections::HashMap;
-use std::collections::hash_map::Entry;
 use crate::panic_with_dialog;
+use std::collections::hash_map::Entry;
+use std::collections::HashMap;
 
 pub struct RenderContext<'a> {
     // canvas: &'a mut render::WindowCanvas,
     // texture_creator: &'a render::TextureCreator<video::WindowContext>,
-    
+
     // ttf_context: &'a ttf::Sdl2TtfContext,
 
     // font: ttf::Font<'a, 'static>,
@@ -17,7 +17,6 @@ pub struct RenderContext<'a> {
     pub character_height: u32,
 
     pub hahahaha: &'a i32,
-
     // cache: HashMap<(String, Color), render::Texture<'a>>,
 }
 impl<'a> RenderContext<'a> {
