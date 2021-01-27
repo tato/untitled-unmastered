@@ -44,52 +44,54 @@ impl UI {
             io.window_dimensions[1],
             Color::rgbf(self.background_color[0], self.background_color[1], self.background_color[2]),
         );
+
+        let foreground_paint = Paint::color(Color::rgbf(
+            self.foreground_color[0], self.foreground_color[1], self.foreground_color[2],
+        ));
+        let background_paint = Paint::color(Color::rgbf(
+            self.background_color[0], self.background_color[1], self.background_color[2],
+        ));
         
         let cursor_color_ms_interval = 500;
         let elapsed_ms = editor.cursor_animation_instant.elapsed().as_millis();
-        let cursor_color = if (elapsed_ms / cursor_color_ms_interval) % 2 == 0 {
-            self.foreground_color
+        let cursor_paint = if (elapsed_ms / cursor_color_ms_interval) % 2 == 0 {
+            foreground_paint
         } else {
-            self.background_color
+            background_paint
         };
         
-        let font_metrics = self.canvas.measure_font(self.font_paint)
+        let text_metrics = self.canvas.measure_text(0.0, 0.0, "A", self.font_paint)
             .expect("Unexpected error: Can't measure font");
+
         let cursor_width = match editor.mode {
-            editor::Mode::INSERT => font_metrics.width() / 4,
-            _ => font_metrics.width(),
+            editor::Mode::INSERT => text_metrics.width() / 4.0,
+            _ => text_metrics.width(),
         };
         
         let cursor = editor.buffer.cursor();
 
-        let cursor_screen_x = ((cursor.0 as u32) * font_metrics.width() as u32) as i32;
-        let cursor_screen_y = (((cursor.1 - editor.y_render_offset) as u32) * font_metrics.height() as u32) as i32;
+        let cursor_screen_x = ((cursor.0 as u32) * text_metrics.width() as u32) as i32;
+        let cursor_screen_y = (((cursor.1 - editor.y_render_offset) as u32) * text_metrics.height() as u32) as i32;
         let mut cursor_target = Path::new();
         cursor_target.rect(
             cursor_screen_x as f32, cursor_screen_y as f32,
-            cursor_width as f32, font_metrics.height() as f32,
+            cursor_width as f32, text_metrics.height() as f32,
         );
-        let cursor_paint = Paint::color(Color::rgbf(
-            cursor_color[0], cursor_color[1], cursor_color[2],
-        ));
         self.canvas.fill_path(&mut cursor_target, cursor_paint);
 
+        let _window_width_in_characters = io.window_dimensions[0] / text_metrics.width() as u32;
+        let window_height_in_characters = io.window_dimensions[1] / text_metrics.height() as u32;
+        
+        let status_line_y =
+            ((window_height_in_characters - 2) * text_metrics.height() as u32) as i32;
+        let mut status_line_rect = Path::new();
+        status_line_rect.rect(
+            0.0, status_line_y as f32,
+            io.window_dimensions[0] as f32, text_metrics.height(),
+        );
+        self.canvas.fill_path(&mut cursor_target, cursor_paint);
+        
         self.canvas.flush();
-
-
-
-
-
-        // let _window_width_in_characters = render.width() / character_width;
-        // let window_height_in_characters = render.height() / character_height;
-
-        // let status_line_y =
-        //     ((window_height_in_characters - 2) * character_height) as i32;
-        // let status_line_rect = Rect::new(
-        //     0, status_line_y,
-        //     render.width(), character_height
-        // );
-        // render.fill_rect(status_line_rect, foreground_color).unwrap_or(());
 
         // let status_text = format!(" {} > {} < $ {} {:?}",
         //                           cursor.1,
