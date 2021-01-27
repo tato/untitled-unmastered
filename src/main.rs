@@ -71,18 +71,12 @@ fn main() {
         .add_font_mem(&resource!("src/Cousine-Regular.ttf"))
         .expect("Cannot add font");
 
-    let images = vec![];
-
-    let mut screenshot_image_id = None;
-
     let start = Instant::now();
     let mut prevt = start;
 
     let mut mousex = 0.0;
     let mut mousey = 0.0;
     let mut dragging = false;
-
-    let mut perf = PerfGraph::new();
 
     el.run(move |event, _, control_flow| {
         let window = windowed_context.window();
@@ -140,27 +134,6 @@ fn main() {
                     ElementState::Pressed => dragging = true,
                     ElementState::Released => dragging = false,
                 },
-                WindowEvent::KeyboardInput {
-                    input:
-                        KeyboardInput {
-                            virtual_keycode: Some(VirtualKeyCode::S),
-                            state: ElementState::Pressed,
-                            ..
-                        },
-                    ..
-                } => {
-                    if let Some(screenshot_image_id) = screenshot_image_id {
-                        canvas.delete_image(screenshot_image_id);
-                    }
-
-                    if let Ok(image) = canvas.screenshot() {
-                        screenshot_image_id = Some(
-                            canvas
-                                .create_image(image.as_ref(), ImageFlags::empty())
-                                .unwrap(),
-                        );
-                    }
-                }
                 WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
                 _ => (),
             },
@@ -168,8 +141,6 @@ fn main() {
                 let now = Instant::now();
                 let dt = (now - prevt).as_secs_f32();
                 prevt = now;
-
-                perf.update(dt);
 
                 let dpi_factor = window.scale_factor();
                 let size = window.inner_size();
@@ -297,43 +268,10 @@ fn main() {
                     Color::rgba(0, 0, 0, 0),
                 );
 
-                draw_thumbnails(&mut canvas, 365.0, popy - 30.0, 160.0, 300.0, &images, t);
-
-                /*
-                draw_spinner(&mut canvas, 15.0, 285.0, 10.0, t);
-                */
-
-                if let Some(image_id) = screenshot_image_id {
-                    let x = size.width as f32 - 512.0;
-                    let y = size.height as f32 - 512.0;
-
-                    let paint = Paint::image(image_id, x, y, 512.0, 512.0, 0.0, 1.0);
-
-                    let mut path = Path::new();
-                    path.rect(x, y, 512.0, 512.0);
-                    canvas.fill_path(&mut path, paint);
-                    canvas.stroke_path(&mut path, Paint::color(Color::hex("454545")));
-                }
-
-                // if true {
-                //     let paint = Paint::image(image_id, size.width as f32, 15.0, 1920.0, 1080.0, 0.0, 1.0);
-                //     let mut path = Path::new();
-                //     path.rect(size.width as f32, 15.0, 1920.0, 1080.0);
-                //     canvas.fill_path(&mut path, paint);
-                // }
-
-                canvas.save_with(|canvas| {
-                    canvas.reset();
-                    perf.render(canvas, 5.0, 5.0);
-                });
-
-                //canvas.restore();
-
                 canvas.flush();
                 windowed_context.swap_buffers().unwrap();
             }
             Event::MainEventsCleared => {
-                //scroll = 1.0;
                 window.request_redraw()
             }
             _ => (),

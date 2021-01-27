@@ -1,8 +1,13 @@
+use std::f32::consts::PI;
+use femtovg::{
+    renderer::OpenGl, Align, Baseline, Canvas, Color, FillRule, FontId, ImageFlags, ImageId,
+    LineCap, LineJoin, Paint, Path, Renderer, Solidity,
+};
 pub fn quantize(a: f32, d: f32) -> f32 {
     (a / d + 0.5).trunc() * d
 }
 
-fn draw_paragraph<T: Renderer>(
+pub fn draw_paragraph<T: Renderer>(
     canvas: &mut Canvas<T>,
     font: FontId,
     x: f32,
@@ -113,7 +118,7 @@ fn draw_paragraph<T: Renderer>(
     canvas.restore();
 }
 
-fn draw_eyes<T: Renderer>(
+pub fn draw_eyes<T: Renderer>(
     canvas: &mut Canvas<T>,
     x: f32,
     y: f32,
@@ -211,7 +216,7 @@ fn draw_eyes<T: Renderer>(
     canvas.fill_path(&mut path, gloss);
 }
 
-fn draw_graph<T: Renderer>(canvas: &mut Canvas<T>, x: f32, y: f32, w: f32, h: f32, t: f32) {
+pub fn draw_graph<T: Renderer>(canvas: &mut Canvas<T>, x: f32, y: f32, w: f32, h: f32, t: f32) {
     let dx = w / 5.0;
     let mut sx = [0.0; 6];
     let mut sy = [0.0; 6];
@@ -305,7 +310,7 @@ fn draw_graph<T: Renderer>(canvas: &mut Canvas<T>, x: f32, y: f32, w: f32, h: f3
     canvas.fill_path(&mut path, Paint::color(Color::rgba(220, 220, 220, 255)));
 }
 
-fn draw_window<T: Renderer>(
+pub fn draw_window<T: Renderer>(
     canvas: &mut Canvas<T>,
     font: FontId,
     title: &str,
@@ -377,7 +382,7 @@ fn draw_window<T: Renderer>(
     canvas.restore();
 }
 
-fn draw_colorwheel<T: Renderer>(canvas: &mut Canvas<T>, x: f32, y: f32, w: f32, h: f32, t: f32) {
+pub fn draw_colorwheel<T: Renderer>(canvas: &mut Canvas<T>, x: f32, y: f32, w: f32, h: f32, t: f32) {
     let hue = (t * 0.12).sin();
 
     canvas.save();
@@ -515,7 +520,7 @@ fn draw_colorwheel<T: Renderer>(canvas: &mut Canvas<T>, x: f32, y: f32, w: f32, 
     canvas.restore();
 }
 
-fn draw_search_box<T: Renderer>(
+pub fn draw_search_box<T: Renderer>(
     canvas: &mut Canvas<T>,
     font: FontId,
     title: &str,
@@ -562,7 +567,7 @@ fn draw_search_box<T: Renderer>(
     let _ = canvas.fill_text(x + w - h * 0.55, y + h * 0.45, "\u{2716}", text_paint);
 }
 
-fn draw_drop_down<T: Renderer>(
+pub fn draw_drop_down<T: Renderer>(
     canvas: &mut Canvas<T>,
     font: FontId,
     title: &str,
@@ -604,7 +609,7 @@ fn draw_drop_down<T: Renderer>(
     let _ = canvas.fill_text(x + w - h * 0.5, y + h * 0.45, "\u{E75E}", text_paint);
 }
 
-fn draw_label<T: Renderer>(
+pub fn draw_label<T: Renderer>(
     canvas: &mut Canvas<T>,
     font: FontId,
     title: &str,
@@ -621,7 +626,7 @@ fn draw_label<T: Renderer>(
     let _ = canvas.fill_text(x, y + h * 0.5, title, text_paint);
 }
 
-fn draw_edit_box_base<T: Renderer>(canvas: &mut Canvas<T>, x: f32, y: f32, w: f32, h: f32) {
+pub fn draw_edit_box_base<T: Renderer>(canvas: &mut Canvas<T>, x: f32, y: f32, w: f32, h: f32) {
     let paint = Paint::box_gradient(
         x + 1.0,
         y + 2.5,
@@ -642,7 +647,7 @@ fn draw_edit_box_base<T: Renderer>(canvas: &mut Canvas<T>, x: f32, y: f32, w: f3
     canvas.stroke_path(&mut path, Paint::color(Color::rgba(0, 0, 0, 48)));
 }
 
-fn draw_edit_box<T: Renderer>(
+pub fn draw_edit_box<T: Renderer>(
     canvas: &mut Canvas<T>,
     font: FontId,
     title: &str,
@@ -661,7 +666,7 @@ fn draw_edit_box<T: Renderer>(
     let _ = canvas.fill_text(x + h * 0.5, y + h * 0.5, title, text_paint);
 }
 
-fn draw_edit_box_num<T: Renderer>(
+pub fn draw_edit_box_num<T: Renderer>(
     canvas: &mut Canvas<T>,
     font: FontId,
     title: &str,
@@ -689,7 +694,7 @@ fn draw_edit_box_num<T: Renderer>(
     }
 }
 
-fn draw_check_box<T: Renderer>(
+pub fn draw_check_box<T: Renderer>(
     canvas: &mut Canvas<T>,
     font: FontId,
     text: &str,
@@ -727,7 +732,7 @@ fn draw_check_box<T: Renderer>(
     let _ = canvas.fill_text(x + 9.0 + 2.0, y + h * 0.5, "\u{2713}", paint);
 }
 
-fn draw_button<T: Renderer>(
+pub fn draw_button<T: Renderer>(
     canvas: &mut Canvas<T>,
     font: FontId,
     preicon: Option<&str>,
@@ -802,7 +807,7 @@ fn draw_button<T: Renderer>(
     let _ = canvas.fill_text(x + w * 0.5 - tw * 0.5 + iw * 0.25, y + h * 0.5, text, paint);
 }
 
-fn draw_slider<T: Renderer>(canvas: &mut Canvas<T>, pos: f32, x: f32, y: f32, w: f32, h: f32) {
+pub fn draw_slider<T: Renderer>(canvas: &mut Canvas<T>, pos: f32, x: f32, y: f32, w: f32, h: f32) {
     let cy = y + (h * 0.5).floor();
     let kr = (h * 0.25).floor();
 
@@ -864,7 +869,7 @@ fn draw_slider<T: Renderer>(canvas: &mut Canvas<T>, pos: f32, x: f32, y: f32, w:
     canvas.restore();
 }
 
-fn draw_thumbnails<T: Renderer>(
+pub fn draw_thumbnails<T: Renderer>(
     canvas: &mut Canvas<T>,
     x: f32,
     y: f32,
@@ -1037,7 +1042,7 @@ fn draw_thumbnails<T: Renderer>(
     canvas.restore();
 }
 
-fn draw_lines<T: Renderer>(canvas: &mut Canvas<T>, x: f32, y: f32, w: f32, _h: f32, t: f32) {
+pub fn draw_lines<T: Renderer>(canvas: &mut Canvas<T>, x: f32, y: f32, w: f32, _h: f32, t: f32) {
     canvas.save();
 
     let pad = 5.0;
@@ -1090,7 +1095,7 @@ fn draw_lines<T: Renderer>(canvas: &mut Canvas<T>, x: f32, y: f32, w: f32, _h: f
     canvas.restore();
 }
 
-fn draw_fills<T: Renderer>(canvas: &mut Canvas<T>, x: f32, y: f32, mousex: f32, mousey: f32) {
+pub fn draw_fills<T: Renderer>(canvas: &mut Canvas<T>, x: f32, y: f32, mousex: f32, mousey: f32) {
     canvas.save();
     canvas.translate(x, y);
 
@@ -1133,7 +1138,7 @@ fn draw_fills<T: Renderer>(canvas: &mut Canvas<T>, x: f32, y: f32, mousex: f32, 
     canvas.restore();
 }
 
-fn draw_widths<T: Renderer>(canvas: &mut Canvas<T>, x: f32, mut y: f32, width: f32) {
+pub fn draw_widths<T: Renderer>(canvas: &mut Canvas<T>, x: f32, mut y: f32, width: f32) {
     canvas.save();
 
     let mut paint = Paint::color(Color::rgba(0, 0, 0, 255));
@@ -1151,7 +1156,7 @@ fn draw_widths<T: Renderer>(canvas: &mut Canvas<T>, x: f32, mut y: f32, width: f
     canvas.restore();
 }
 
-fn draw_caps<T: Renderer>(canvas: &mut Canvas<T>, x: f32, y: f32, width: f32) {
+pub fn draw_caps<T: Renderer>(canvas: &mut Canvas<T>, x: f32, y: f32, width: f32) {
     let caps = [LineCap::Butt, LineCap::Round, LineCap::Square];
     let line_width = 8.0;
 
@@ -1179,7 +1184,7 @@ fn draw_caps<T: Renderer>(canvas: &mut Canvas<T>, x: f32, y: f32, width: f32) {
     canvas.restore();
 }
 
-fn draw_scissor<T: Renderer>(canvas: &mut Canvas<T>, x: f32, y: f32, t: f32) {
+pub fn draw_scissor<T: Renderer>(canvas: &mut Canvas<T>, x: f32, y: f32, t: f32) {
     canvas.save();
 
     // Draw first rect and set scissor to it's area.
@@ -1285,7 +1290,7 @@ impl PerfGraph {
     }
 }
 
-fn draw_spinner<T: Renderer>(canvas: &mut Canvas<T>, cx: f32, cy: f32, r: f32, t: f32) {
+pub fn draw_spinner<T: Renderer>(canvas: &mut Canvas<T>, cx: f32, cy: f32, r: f32, t: f32) {
     let a0 = 0.0 + t * 6.0;
     let a1 = std::f32::consts::PI + t * 6.0;
     let r0 = r;
