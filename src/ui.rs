@@ -27,7 +27,7 @@ impl UI {
         self.canvas.set_size(
             io.window_dimensions[0],
             io.window_dimensions[1],
-            io.dpi_factor as f32,
+            1.0
         );
         self.canvas.clear_rect(
             0,
@@ -47,12 +47,14 @@ impl UI {
             self.foreground_color[2],
         ));
         foreground_paint.set_font(&[self.font]);
+        foreground_paint.set_font_size(18.0);
         let mut background_paint = Paint::color(Color::rgbf(
             self.background_color[0],
             self.background_color[1],
             self.background_color[2],
         ));
         background_paint.set_font(&[self.font]);
+        foreground_paint.set_font_size(18.0);
 
         let cursor_color_ms_interval = 500;
         let elapsed_ms = editor.cursor_animation_instant.elapsed().as_millis();
@@ -71,36 +73,40 @@ impl UI {
             .measure_font(foreground_paint)
             .expect("Unexpected error: Can't measure font");
 
+        let font_width = text_metrics.width();
+        let font_height = font_metrics.height();
+
+
         let cursor_width = match editor.mode {
-            editor::Mode::INSERT => text_metrics.width() / 4.0,
-            _ => text_metrics.width(),
+            editor::Mode::INSERT => font_width / 4.0,
+            _ => font_width,
         };
 
         let cursor = editor.buffer.cursor();
 
-        let cursor_screen_x = ((cursor.0 as u32) * text_metrics.width() as u32) as i32;
+        let cursor_screen_x = ((cursor.0 as u32) * font_width as u32) as i32;
         let cursor_screen_y =
-            (((cursor.1 - editor.y_render_offset) as u32) * font_metrics.height() as u32) as i32;
+            (((cursor.1 - editor.y_render_offset) as u32) * font_height as u32) as i32;
         let mut cursor_target = Path::new();
         cursor_target.rect(
             cursor_screen_x as f32,
             cursor_screen_y as f32,
             cursor_width as f32,
-            font_metrics.height() as f32,
+            font_height as f32,
         );
         self.canvas.fill_path(&mut cursor_target, cursor_paint);
 
-        let _window_width_in_characters = io.window_dimensions[0] / text_metrics.width() as u32;
+        let _window_width_in_characters = io.window_dimensions[0] / font_width as u32;
         let window_height_in_characters = io.window_dimensions[1] / font_metrics.height() as u32;
 
         let status_line_y =
-            ((window_height_in_characters - 2) * font_metrics.height() as u32) as i32;
+            ((window_height_in_characters - 2) * font_height as u32) as i32;
         let mut status_line_rect = Path::new();
         status_line_rect.rect(
             0.0,
             status_line_y as f32,
             io.window_dimensions[0] as f32,
-            font_metrics.height(),
+            font_height,
         );
         self.canvas
             .fill_path(&mut status_line_rect, foreground_paint);
@@ -130,7 +136,7 @@ impl UI {
             .take((window_height_in_characters - 2) as usize)
             .enumerate()
         {
-            let y = line_index as f32 * font_metrics.height();
+            let y = line_index as f32 * font_height;
             self.canvas
                 .fill_text(0.0, y + font_metrics.ascender(), line, foreground_paint)
                 .expect("Unexpected rendering error");
