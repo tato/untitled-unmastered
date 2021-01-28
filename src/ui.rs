@@ -9,7 +9,6 @@ use unicode_segmentation::UnicodeSegmentation;
 pub struct UI {
     pub canvas: Canvas<OpenGl>,
     font: FontId,
-    font_paint: Paint,
     background_color: [f32; 4],
     foreground_color: [f32; 4],
 }
@@ -21,16 +20,9 @@ impl UI {
         let background_color = [0.3, 0.3, 0.32, 1.0];
         let foreground_color = [1.0, 1.0, 1.0, 1.0];
 
-        let mut font_paint = Paint::color(Color::rgbf(
-            foreground_color[0],
-            foreground_color[1],
-            foreground_color[2],
-        ));
-        font_paint.set_font(&[font]);
         Self {
             canvas,
             font,
-            font_paint,
             background_color,
             foreground_color,
         }
@@ -46,12 +38,14 @@ impl UI {
             Color::rgbf(self.background_color[0], self.background_color[1], self.background_color[2]),
         );
 
-        let foreground_paint = Paint::color(Color::rgbf(
+        let mut foreground_paint = Paint::color(Color::rgbf(
             self.foreground_color[0], self.foreground_color[1], self.foreground_color[2],
         ));
-        let background_paint = Paint::color(Color::rgbf(
+        foreground_paint.set_font(&[self.font]);
+        let mut background_paint = Paint::color(Color::rgbf(
             self.background_color[0], self.background_color[1], self.background_color[2],
         ));
+        background_paint.set_font(&[self.font]);
         
         let cursor_color_ms_interval = 500;
         let elapsed_ms = editor.cursor_animation_instant.elapsed().as_millis();
@@ -61,9 +55,9 @@ impl UI {
             background_paint
         };
         
-        let text_metrics = self.canvas.measure_text(0.0, 0.0, "A", self.font_paint)
+        let text_metrics = self.canvas.measure_text(0.0, 0.0, "A", foreground_paint)
             .expect("Unexpected error: Can't measure font");
-        let font_metrics = self.canvas.measure_font(self.font_paint)
+        let font_metrics = self.canvas.measure_font(foreground_paint)
             .expect("Unexpected error: Can't measure font");
 
         let cursor_width = match editor.mode {
@@ -92,7 +86,7 @@ impl UI {
             0.0, status_line_y as f32,
             io.window_dimensions[0] as f32, font_metrics.height(),
         );
-        self.canvas.fill_path(&mut cursor_target, cursor_paint);
+        self.canvas.fill_path(&mut status_line_rect, foreground_paint);
 
         let status_text = format!(" {} > {} < $ {} {:?}",
                                   cursor.1,
@@ -100,7 +94,7 @@ impl UI {
                                   editor.matching_input_text,
                                   editor.matching_input_timeout);
         
-        self.canvas.fill_text(0.0, status_line_y as f32 + font_metrics.ascender(), status_text.as_str(), self.font_paint);
+        self.canvas.fill_text(0.0, status_line_y as f32 + font_metrics.ascender(), status_text.as_str(), background_paint);
 
         for (line_index, line) in editor
             .buffer
@@ -111,7 +105,7 @@ impl UI {
             .enumerate()
         {
             let y = line_index as f32 * font_metrics.height();
-            self.canvas.fill_text(0.0, y + font_metrics.ascender(), line, self.font_paint);
+            self.canvas.fill_text(0.0, y + font_metrics.ascender(), line, foreground_paint);
         }
 
         self.canvas.flush();

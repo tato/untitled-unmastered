@@ -41,10 +41,7 @@ pub fn panic_with_dialog<Any>(m: impl std::fmt::Display) -> Any {
 
 pub mod buffer;
 pub mod editor;
-pub mod render;
 pub mod ui;
-pub mod wacky;
-use wacky::*;
 
 #[derive(Debug, Clone)]
 pub struct IO {
