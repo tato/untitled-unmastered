@@ -64,9 +64,10 @@ impl Editor {
         &mut self,
         // render: &RenderContext,
         text: &str,
-        modifs: u32,
+        io: &IO,
         is_text_input: bool,
     ) {
+        let mut modifs: u32 = 0;
         self.matching_input_text += text;
         self.matching_input_modifs.push(modifs);
         self.matching_input_timeout = Duration::from_secs(1);

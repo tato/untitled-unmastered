@@ -48,6 +48,10 @@ pub struct IO {
     mouse_position: [f32; 2],
     dpi_factor: f64,
     window_dimensions: [u32; 2],
+
+    ctrl: bool,
+    shift: bool,
+    alt: bool,
 }
 impl Default for IO {
     fn default() -> Self {
@@ -55,6 +59,9 @@ impl Default for IO {
             mouse_position: Default::default(),
             dpi_factor: Default::default(),
             window_dimensions: Default::default(),
+            ctrl: Default::default(),
+            shift: Default::default(),
+            alt: Default::default(),
         }
     }
 }
@@ -103,6 +110,21 @@ fn main() {
                 WindowEvent::Resized(physical_size) => {
                     windowed_context.resize(*physical_size);
                 }
+                WindowEvent::ReceivedCharacter(c) => {
+                    editor.handle_input(&c.to_string(), &io, true);
+                }
+                WindowEvent::ModifiersChanged(modifs) => {
+                    io.ctrl = modifs.ctrl();
+                    io.shift = modifs.shift();
+                    io.alt = modifs.alt();
+                }
+                WindowEvent::KeyboardInput { input, .. } => {
+
+                    // let is_text_input = false;
+                    // if let Some(gc) = get_utf8_for_keycode(keycode) {
+                    //     editor.handle_input(&render, gc, modifs, is_text_input);
+                    // }
+                }
                 WindowEvent::CursorMoved {
                     device_id: _,
                     position,
@@ -121,7 +143,7 @@ fn main() {
                 },
                 WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
                 _ => (),
-            },
+            }
             Event::RedrawRequested(_) => {
                 let now = Instant::now();
                 let dt = (now - prevt).as_secs_f32();
