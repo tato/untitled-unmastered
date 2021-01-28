@@ -4,6 +4,7 @@ use femtovg::{
     renderer::OpenGl, Align, Baseline, Canvas, Color, FillRule, FontId, ImageFlags, ImageId,
     LineCap, LineJoin, Paint, Path, Renderer, Solidity,
 };
+use unicode_segmentation::UnicodeSegmentation;
 
 pub struct UI {
     pub canvas: Canvas<OpenGl>,
@@ -62,6 +63,8 @@ impl UI {
         
         let text_metrics = self.canvas.measure_text(0.0, 0.0, "A", self.font_paint)
             .expect("Unexpected error: Can't measure font");
+        let font_metrics = self.canvas.measure_font(self.font_paint)
+            .expect("Unexpected error: Can't measure font");
 
         let cursor_width = match editor.mode {
             editor::Mode::INSERT => text_metrics.width() / 4.0,
@@ -71,78 +74,47 @@ impl UI {
         let cursor = editor.buffer.cursor();
 
         let cursor_screen_x = ((cursor.0 as u32) * text_metrics.width() as u32) as i32;
-        let cursor_screen_y = (((cursor.1 - editor.y_render_offset) as u32) * text_metrics.height() as u32) as i32;
+        let cursor_screen_y = (((cursor.1 - editor.y_render_offset) as u32) * font_metrics.height() as u32) as i32;
         let mut cursor_target = Path::new();
         cursor_target.rect(
             cursor_screen_x as f32, cursor_screen_y as f32,
-            cursor_width as f32, text_metrics.height() as f32,
+            cursor_width as f32, font_metrics.height() as f32,
         );
         self.canvas.fill_path(&mut cursor_target, cursor_paint);
 
         let _window_width_in_characters = io.window_dimensions[0] / text_metrics.width() as u32;
-        let window_height_in_characters = io.window_dimensions[1] / text_metrics.height() as u32;
+        let window_height_in_characters = io.window_dimensions[1] / font_metrics.height() as u32;
         
         let status_line_y =
-            ((window_height_in_characters - 2) * text_metrics.height() as u32) as i32;
+            ((window_height_in_characters - 2) * font_metrics.height() as u32) as i32;
         let mut status_line_rect = Path::new();
         status_line_rect.rect(
             0.0, status_line_y as f32,
-            io.window_dimensions[0] as f32, text_metrics.height(),
+            io.window_dimensions[0] as f32, font_metrics.height(),
         );
         self.canvas.fill_path(&mut cursor_target, cursor_paint);
+
+        let status_text = format!(" {} > {} < $ {} {:?}",
+                                  cursor.1,
+                                  editor.editing_file_path,
+                                  editor.matching_input_text,
+                                  editor.matching_input_timeout);
         
+        self.canvas.fill_text(0.0, status_line_y as f32 + font_metrics.ascender(), status_text.as_str(), self.font_paint);
+
+        for (line_index, line) in editor
+            .buffer
+            .to_string()
+            .split('\n')
+            .skip(editor.y_render_offset)
+            .take((window_height_in_characters - 2) as usize)
+            .enumerate()
+        {
+            let y = line_index as f32 * font_metrics.height();
+            self.canvas.fill_text(0.0, y + font_metrics.ascender(), line, self.font_paint);
+        }
+
         self.canvas.flush();
-
-        // let status_text = format!(" {} > {} < $ {} {:?}",
-        //                           cursor.1,
-        //                           editor.editing_file_path,
-        //                           editor.matching_input_text,
-        //                           editor.matching_input_timeout);
-
-        // let gcs = UnicodeSegmentation::graphemes(status_text.as_str(), true);
-        // for (ci_usize, c) in gcs.enumerate() {
-        //     let ci: i32 = ci_usize as i32;
-        //     let cw: i32 = character_width as i32;
-
-        //     let target_x = ci * cw;
-        //     let target_y = status_line_y;
-        //     render
-        //         .draw_character(c, background_color, target_x, target_y)
-        //         .unwrap_or(());
-        // }
-
-        // for (line_index, line) in editor
-        //     .buffer
-        //     .to_string()
-        //     .split('\n')
-        //     .skip(editor.y_render_offset)
-        //     .take((window_height_in_characters - 2) as usize)
-        //     .enumerate()
-        // {
-        //     let gcs = UnicodeSegmentation::graphemes(line, true);
-        //     for (ch_index, c) in gcs.enumerate() {
-        //         let character_color = if line_index == cursor.1 as usize
-        //             && ch_index == cursor.0 as usize
-        //             && editor.mode != editor::Mode::INSERT
-        //         {
-        //             if (elapsed_ms / cursor_color_ms_interval) % 2 == 0 {
-        //                 background_color
-        //             } else {
-        //                 foreground_color
-        //             }
-        //         } else {
-        //             foreground_color
-        //         };
-
-        //         let target_x: i32 = (ch_index as i32) * (character_width as i32);
-        //         let target_y: i32 = (line_index as i32) * (character_height as i32);
-        //         render
-        //             .draw_character(c, character_color, target_x, target_y)
-        //             .unwrap_or(());
-        //     }
-        // }
-
-        // render.finish_frame();
     }
 }
 
