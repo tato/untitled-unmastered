@@ -2,21 +2,14 @@
 
 use editor::Editor;
 use std::cmp::min;
-use std::f32::consts::PI;
 use std::time::{Duration, Instant};
 use unicode_segmentation::UnicodeSegmentation;
 
-use resource::resource;
-
-use femtovg::{
-    renderer::OpenGl, Align, Baseline, Canvas, Color, FillRule, FontId, ImageFlags, ImageId,
-    LineCap, LineJoin, Paint, Path, Renderer, Solidity,
-};
-use glutin::event::{ElementState, Event, KeyboardInput, MouseButton, VirtualKeyCode, WindowEvent};
+use femtovg::{renderer::OpenGl, Canvas};
+use glutin::event::{Event, WindowEvent};
 use glutin::event_loop::{ControlFlow, EventLoop};
 use glutin::window::WindowBuilder;
 use glutin::ContextBuilder;
-
 
 pub mod buffer;
 pub mod editor;
@@ -31,12 +24,22 @@ pub struct Modifiers {
 }
 impl Default for Modifiers {
     fn default() -> Self {
-        Self { ctrl: false, shift: false, alt: false, logo: false, }
+        Self {
+            ctrl: false,
+            shift: false,
+            alt: false,
+            logo: false,
+        }
     }
 }
 impl From<&glutin::event::ModifiersState> for Modifiers {
     fn from(it: &glutin::event::ModifiersState) -> Self {
-        Self { ctrl: it.ctrl(), shift: it.shift(), alt: it.alt(), logo: it.logo(), }
+        Self {
+            ctrl: it.ctrl(),
+            shift: it.shift(),
+            alt: it.alt(),
+            logo: it.logo(),
+        }
     }
 }
 
@@ -59,10 +62,11 @@ impl Default for IO {
     }
 }
 
-
 fn main() {
     std::panic::set_hook(Box::new(|info| {
-        msgbox::create("uu error", &info.to_string(), msgbox::IconType::Error);
+        if msgbox::create("uu error", &info.to_string(), msgbox::IconType::Error).is_err() {
+            println!("{}", info);
+        }
     }));
 
     let el = EventLoop::new();
@@ -84,13 +88,11 @@ fn main() {
         (renderer, windowed_context)
     };
 
-    let mut canvas = Canvas::new(renderer).expect("Cannot create canvas");
+    let canvas = Canvas::new(renderer).expect("Cannot create canvas");
     let mut ui = ui::UI::new(canvas);
 
     let start = Instant::now();
     let mut prevt = start;
-
-    let mut dragging = false;
 
     let mut io: IO = Default::default();
     let mut editor = editor::Editor::new();
@@ -121,38 +123,23 @@ fn main() {
                     io.mouse_position[0] = position.x as f32;
                     io.mouse_position[1] = position.y as f32;
                 }
-                WindowEvent::MouseInput {
-                    button: MouseButton::Left,
-                    state,
-                    ..
-                } => match state {
-                    ElementState::Pressed => dragging = true,
-                    ElementState::Released => dragging = false,
-                },
                 WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
                 _ => (),
-            }
+            },
             Event::RedrawRequested(_) => {
                 let now = Instant::now();
-                let dt = (now - prevt).as_secs_f32();
+                let _dt = (now - prevt).as_secs_f32();
                 prevt = now;
 
                 io.dpi_factor = window.scale_factor();
                 let size = window.inner_size();
                 io.window_dimensions = [size.width, size.height];
 
-                let t = start.elapsed().as_secs_f32();
-
-                let height = size.height as f32;
-                let width = size.width as f32;
-
                 ui.run(&mut io, &editor);
 
                 windowed_context.swap_buffers().unwrap();
             }
-            Event::MainEventsCleared => {
-                window.request_redraw()
-            }
+            Event::MainEventsCleared => window.request_redraw(),
             _ => (),
         }
     });

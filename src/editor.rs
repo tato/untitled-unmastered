@@ -44,9 +44,9 @@ impl Editor {
         self.cursor_animation_instant = Instant::now();
     }
 
-    pub fn move_cursor_vertical(&mut self, y: i64/*, render: &RenderContext*/) {
+    pub fn move_cursor_vertical(&mut self, y: i64 /*, render: &RenderContext*/) {
         self.buffer.move_cursor_vertical(y);
-        let (_, cursor_y) = self.buffer.cursor();
+        let (_, _cursor_y) = self.buffer.cursor();
 
         // let cheight = render.character_height;
         // let window_height_in_characters = (render.height() / cheight) as usize;
@@ -73,11 +73,11 @@ impl Editor {
 
         match self.mode {
             Mode::NORMAL => self.handle_input_in_normal_mode(/*render*/),
-            Mode::INSERT => self.handle_input_in_insert_mode(/*render, */text, is_text_input),
+            Mode::INSERT => self.handle_input_in_insert_mode(/*render, */ text, is_text_input),
         }
     }
 
-    fn handle_input_in_normal_mode(&mut self/*, render: &RenderContext*/) {
+    fn handle_input_in_normal_mode(&mut self /*, render: &RenderContext*/) {
         let mut reset_matching_input = true;
 
         let mit: &str = &self.matching_input_text;
@@ -90,8 +90,8 @@ impl Editor {
             }
             ("h", _) => self.move_cursor_horizontal(-1),
             ("l", _) => self.move_cursor_horizontal(1),
-            ("k", _) => self.move_cursor_vertical(-1/*, render*/),
-            ("j", _) => self.move_cursor_vertical(1/*, render*/),
+            ("k", _) => self.move_cursor_vertical(-1 /*, render*/),
+            ("j", _) => self.move_cursor_vertical(1 /*, render*/),
             ("e", _) => loop {
                 let c = self.buffer.get_under_cursor();
                 if c == " " || c == "\n" {
@@ -113,14 +113,15 @@ impl Editor {
     fn handle_input_in_insert_mode(
         &mut self,
         // render: &RenderContext,
-        input: &str,
-        is_text_input: bool,
+        _input: &str,
+        _is_text_input: bool,
     ) {
         let mut reset_matching_input = true;
 
         let mit: &str = &self.matching_input_text;
         let mim: &[Modifiers] = &self.matching_input_modifs;
         match (mit, mim) {
+            ("a", _) => { /* dummy */ }
             // binding!(BACKSPACE) => {
             //     self.buffer.delete_under_cursor();
             // }
