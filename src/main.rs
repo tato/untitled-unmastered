@@ -5,7 +5,6 @@ use std::cmp::min;
 use std::f32::consts::PI;
 use std::time::{Duration, Instant};
 use unicode_segmentation::UnicodeSegmentation;
-use uu_rust_macros::*;
 
 use resource::resource;
 
@@ -18,30 +17,28 @@ use glutin::event_loop::{ControlFlow, EventLoop};
 use glutin::window::WindowBuilder;
 use glutin::ContextBuilder;
 
-pub fn panic_with_dialog<Any>(m: impl std::fmt::Display) -> Any {
-    // let owned = m.to_string();
-    // sdl2::messagebox::show_simple_message_box(
-    //     sdl2::messagebox::MessageBoxFlag::ERROR,
-    //     "uu error", &owned, None).expect(&owned);
-    panic!("{}", m);
-}
-
-// pub fn get_utf8_for_keycode(keycode: Keycode) -> Option<&'static str> {
-//     match keycode {
-//         Keycode::Backspace => Some(BACKSPACE!()),
-//         Keycode::Escape => Some(ESCAPE!()),
-//         Keycode::Return => Some(RETURN!()),
-//         Keycode::Left => Some(LEFT!()),
-//         Keycode::Right => Some(RIGHT!()),
-//         Keycode::Up => Some(UP!()),
-//         Keycode::Down => Some(DOWN!()),
-//         _ => None,
-//     }
-// }
 
 pub mod buffer;
 pub mod editor;
 pub mod ui;
+
+#[derive(Debug, Clone, Copy)]
+pub struct Modifiers {
+    ctrl: bool,
+    shift: bool,
+    alt: bool,
+    logo: bool,
+}
+impl Default for Modifiers {
+    fn default() -> Self {
+        Self { ctrl: false, shift: false, alt: false, logo: false, }
+    }
+}
+impl From<&glutin::event::ModifiersState> for Modifiers {
+    fn from(it: &glutin::event::ModifiersState) -> Self {
+        Self { ctrl: it.ctrl(), shift: it.shift(), alt: it.alt(), logo: it.logo(), }
+    }
+}
 
 #[derive(Debug, Clone)]
 pub struct IO {
@@ -49,9 +46,7 @@ pub struct IO {
     dpi_factor: f64,
     window_dimensions: [u32; 2],
 
-    ctrl: bool,
-    shift: bool,
-    alt: bool,
+    current_modifiers: Modifiers,
 }
 impl Default for IO {
     fn default() -> Self {
@@ -59,15 +54,17 @@ impl Default for IO {
             mouse_position: Default::default(),
             dpi_factor: Default::default(),
             window_dimensions: Default::default(),
-            ctrl: Default::default(),
-            shift: Default::default(),
-            alt: Default::default(),
+            current_modifiers: Default::default(),
         }
     }
 }
 
 
 fn main() {
+    std::panic::set_hook(Box::new(|info| {
+        msgbox::create("uu error", &info.to_string(), msgbox::IconType::Error);
+    }));
+
     let el = EventLoop::new();
 
     let (renderer, windowed_context) = {
@@ -111,19 +108,10 @@ fn main() {
                     windowed_context.resize(*physical_size);
                 }
                 WindowEvent::ReceivedCharacter(c) => {
-                    editor.handle_input(&c.to_string(), &io, true);
+                    editor.handle_input(&c.to_string(), io.current_modifiers, true);
                 }
                 WindowEvent::ModifiersChanged(modifs) => {
-                    io.ctrl = modifs.ctrl();
-                    io.shift = modifs.shift();
-                    io.alt = modifs.alt();
-                }
-                WindowEvent::KeyboardInput { input, .. } => {
-
-                    // let is_text_input = false;
-                    // if let Some(gc) = get_utf8_for_keycode(keycode) {
-                    //     editor.handle_input(&render, gc, modifs, is_text_input);
-                    // }
+                    io.current_modifiers = modifs.into();
                 }
                 WindowEvent::CursorMoved {
                     device_id: _,

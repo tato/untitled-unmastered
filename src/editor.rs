@@ -17,7 +17,7 @@ pub struct Editor {
     pub cursor_animation_instant: Instant,
 
     pub matching_input_text: String,
-    pub matching_input_modifs: Vec<u32>,
+    pub matching_input_modifs: Vec<Modifiers>,
     pub matching_input_timeout: Duration,
 }
 
@@ -64,10 +64,9 @@ impl Editor {
         &mut self,
         // render: &RenderContext,
         text: &str,
-        io: &IO,
+        modifs: Modifiers,
         is_text_input: bool,
     ) {
-        let mut modifs: u32 = 0;
         self.matching_input_text += text;
         self.matching_input_modifs.push(modifs);
         self.matching_input_timeout = Duration::from_secs(1);
@@ -82,18 +81,18 @@ impl Editor {
         let mut reset_matching_input = true;
 
         let mit: &str = &self.matching_input_text;
-        let mim: &[u32] = &self.matching_input_modifs;
+        let mim: &[Modifiers] = &self.matching_input_modifs;
         match (mit, mim) {
-            binding!(i) => self.mode = Mode::INSERT,
-            binding!(a) => {
+            ("i", _) => self.mode = Mode::INSERT,
+            ("a", _) => {
                 self.move_cursor_horizontal(1);
                 self.mode = Mode::INSERT;
             }
-            binding!(h) => self.move_cursor_horizontal(-1),
-            binding!(l) => self.move_cursor_horizontal(1),
-            binding!(k) => self.move_cursor_vertical(-1/*, render*/),
-            binding!(j) => self.move_cursor_vertical(1/*, render*/),
-            binding!(e) | binding!(E) => loop {
+            ("h", _) => self.move_cursor_horizontal(-1),
+            ("l", _) => self.move_cursor_horizontal(1),
+            ("k", _) => self.move_cursor_vertical(-1/*, render*/),
+            ("j", _) => self.move_cursor_vertical(1/*, render*/),
+            ("e", _) => loop {
                 let c = self.buffer.get_under_cursor();
                 if c == " " || c == "\n" {
                     self.move_cursor_horizontal(-1);
@@ -101,8 +100,8 @@ impl Editor {
                 }
                 self.move_cursor_horizontal(1);
             },
-            binding!(d, d) => println!("dd is nice!"),
-            binding!(CTRL + a, b, CTRL + c) => println!("abc is nice!"),
+            ("dd", _) => println!("dd is nice!"),
+            // binding!(CTRL + a, b, CTRL + c) => println!("abc is nice!"),
             _ => reset_matching_input = false,
         }
 
@@ -120,36 +119,36 @@ impl Editor {
         let mut reset_matching_input = true;
 
         let mit: &str = &self.matching_input_text;
-        let mim: &[u32] = &self.matching_input_modifs;
+        let mim: &[Modifiers] = &self.matching_input_modifs;
         match (mit, mim) {
-            binding!(BACKSPACE) => {
-                self.buffer.delete_under_cursor();
-            }
-            binding!(RETURN) => {
-                self.buffer.insert_under_cursor("\n");
-            }
-            binding!(LEFT) => self.move_cursor_horizontal(-1),
-            binding!(RIGHT) => self.move_cursor_horizontal(1),
-            binding!(UP) => self.move_cursor_vertical(-1/*, render*/),
-            binding!(DOWN) => self.move_cursor_vertical(1/*, render*/),
-            binding!(CTRL + o) => {
-                let result = nfd::open_file_dialog(None, None).unwrap_or_else(panic_with_dialog);
+            // binding!(BACKSPACE) => {
+            //     self.buffer.delete_under_cursor();
+            // }
+            // binding!(RETURN) => {
+            //     self.buffer.insert_under_cursor("\n");
+            // }
+            // binding!(LEFT) => self.move_cursor_horizontal(-1),
+            // binding!(RIGHT) => self.move_cursor_horizontal(1),
+            // binding!(UP) => self.move_cursor_vertical(-1/*, render*/),
+            // binding!(DOWN) => self.move_cursor_vertical(1/*, render*/),
+            // binding!(CTRL + o) => {
+            //     let result = nfd::open_file_dialog(None, None).unwrap_or_else(panic_with_dialog);
 
-                if let nfd::Response::Okay(file_path) = result {
-                    self.editing_file_path = file_path.clone();
-                    let t = std::fs::read_to_string(file_path).unwrap_or_else(|_| "".to_string());
-                    self.buffer = buffer::Buffer::from(&t);
-                }
-            }
-            binding!(CTRL + s) => {
-                if !self.editing_file_path.is_empty() {
-                    std::fs::write(&self.editing_file_path, self.buffer.to_string()).unwrap_or(());
-                }
-            }
-            binding!(ESCAPE) | binding!(CTRL + c) => self.mode = Mode::NORMAL,
-            _ if is_text_input => {
-                self.buffer.insert_under_cursor(input);
-            }
+            //     if let nfd::Response::Okay(file_path) = result {
+            //         self.editing_file_path = file_path.clone();
+            //         let t = std::fs::read_to_string(file_path).unwrap_or_else(|_| "".to_string());
+            //         self.buffer = buffer::Buffer::from(&t);
+            //     }
+            // }
+            // binding!(CTRL + s) => {
+            //     if !self.editing_file_path.is_empty() {
+            //         std::fs::write(&self.editing_file_path, self.buffer.to_string()).unwrap_or(());
+            //     }
+            // }
+            // binding!(ESCAPE) | binding!(CTRL + c) => self.mode = Mode::NORMAL,
+            // _ if is_text_input => {
+            //     self.buffer.insert_under_cursor(input);
+            // }
             _ => reset_matching_input = false,
         }
 

@@ -9,9 +9,9 @@ edition = "2018"
 debug = true
 
 [dependencies]
-uu-rust-macros = { path = "uu-rust-macros" }
 unicode-segmentation = "1.3"
 nfd = { git = "https://github.com/saurvs/nfd-rs", rev = "07578c5" }
 glutin = "0"
 femtovg = "0"
 resource = "0"
+msgbox = "0"

@@ -1,4 +1,4 @@
-use crate::{min, panic_with_dialog, UnicodeSegmentation};
+use crate::{min, UnicodeSegmentation};
 pub struct Buffer {
     lines: Vec<String>,
 
