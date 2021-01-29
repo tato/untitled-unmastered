@@ -21,6 +21,10 @@ pub struct Editor {
     pub matching_input_timeout: Duration,
 }
 
+pub struct DisplayInformation {
+    pub window_height_in_characters: usize,
+}
+
 impl Editor {
     pub fn new() -> Self {
         Self {
@@ -44,40 +48,38 @@ impl Editor {
         self.cursor_animation_instant = Instant::now();
     }
 
-    pub fn move_cursor_vertical(&mut self, y: i64 /*, render: &RenderContext*/) {
+    pub fn move_cursor_vertical(&mut self, y: i64, info: &DisplayInformation) {
         self.buffer.move_cursor_vertical(y);
-        let (_, _cursor_y) = self.buffer.cursor();
+        let (_, cursor_y) = self.buffer.cursor();
 
-        // let cheight = render.character_height;
-        // let window_height_in_characters = (render.height() / cheight) as usize;
-        // if y > 0 && cursor_y > self.y_render_offset + window_height_in_characters - 7 {
-        //     self.y_render_offset += y as usize;
-        // }
-        // if y < 0 && cursor_y < self.y_render_offset + 5 && (self.y_render_offset as i64) + y >= 0 {
-        //     self.y_render_offset -= (-y) as usize;
-        // }
+        if y > 0 && cursor_y > self.y_render_offset + info.window_height_in_characters - 7 {
+            self.y_render_offset += y as usize;
+        }
+        if y < 0 && cursor_y < self.y_render_offset + 5 && (self.y_render_offset as i64) + y >= 0 {
+            self.y_render_offset -= (-y) as usize;
+        }
 
         self.cursor_animation_instant = Instant::now();
     }
 
     pub fn handle_input(
         &mut self,
-        // render: &RenderContext,
         text: &str,
         modifs: Modifiers,
         is_text_input: bool,
+        info: &DisplayInformation,
     ) {
         self.matching_input_text += text;
         self.matching_input_modifs.push(modifs);
         self.matching_input_timeout = Duration::from_secs(1);
 
         match self.mode {
-            Mode::NORMAL => self.handle_input_in_normal_mode(/*render*/),
-            Mode::INSERT => self.handle_input_in_insert_mode(/*render, */ text, is_text_input),
+            Mode::NORMAL => self.handle_input_in_normal_mode(info),
+            Mode::INSERT => self.handle_input_in_insert_mode(text, is_text_input, info),
         }
     }
 
-    fn handle_input_in_normal_mode(&mut self /*, render: &RenderContext*/) {
+    fn handle_input_in_normal_mode(&mut self, info: &DisplayInformation) {
         let mut reset_matching_input = true;
 
         let mit: &str = &self.matching_input_text;
@@ -90,8 +92,8 @@ impl Editor {
             }
             ("h", _) => self.move_cursor_horizontal(-1),
             ("l", _) => self.move_cursor_horizontal(1),
-            ("k", _) => self.move_cursor_vertical(-1 /*, render*/),
-            ("j", _) => self.move_cursor_vertical(1 /*, render*/),
+            ("k", _) => self.move_cursor_vertical(-1, info),
+            ("j", _) => self.move_cursor_vertical(1, info),
             ("e", _) => loop {
                 let c = self.buffer.get_under_cursor();
                 if c == " " || c == "\n" {
@@ -112,9 +114,9 @@ impl Editor {
     }
     fn handle_input_in_insert_mode(
         &mut self,
-        // render: &RenderContext,
         _input: &str,
         _is_text_input: bool,
+        _info: &DisplayInformation,
     ) {
         let mut reset_matching_input = true;
 

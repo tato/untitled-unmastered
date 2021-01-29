@@ -144,4 +144,25 @@ impl UI {
 
         self.canvas.flush();
     }
+
+    // TODO: depends on a lot of values from the render function. refactor.
+    // TODO: it shouldn't be necessary for this function to take &mut
+    pub fn character_height(&mut self) -> u32 {
+        let mut foreground_paint = Paint::color(Color::rgbf(
+            self.foreground_color[0],
+            self.foreground_color[1],
+            self.foreground_color[2],
+        ));
+        foreground_paint.set_font(&[self.font]);
+        foreground_paint.set_font_size(18.0);
+
+
+        let font_metrics = self
+            .canvas
+            .measure_font(foreground_paint)
+            .expect("Unexpected error: Can't measure font");
+
+        let font_height = font_metrics.height();
+        font_height.ceil() as u32
+    }
 }

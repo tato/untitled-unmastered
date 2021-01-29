@@ -1,6 +1,6 @@
 #![allow(clippy::new_without_default)]
 
-use editor::Editor;
+use editor::{Editor, DisplayInformation};
 use std::cmp::min;
 use std::time::{Duration, Instant};
 use unicode_segmentation::UnicodeSegmentation;
@@ -110,7 +110,10 @@ fn main() {
                     windowed_context.resize(*physical_size);
                 }
                 WindowEvent::ReceivedCharacter(c) => {
-                    editor.handle_input(&c.to_string(), io.current_modifiers, true);
+                    let cheight = ui.character_height();
+                    let window_height_in_characters = (io.window_dimensions[1] / cheight) as usize;
+                    let info = DisplayInformation{ window_height_in_characters };
+                    editor.handle_input(&c.to_string(), io.current_modifiers, true, &info);
                 }
                 WindowEvent::ModifiersChanged(modifs) => {
                     io.current_modifiers = modifs.into();
