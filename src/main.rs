@@ -1,6 +1,6 @@
 #![allow(clippy::new_without_default)]
 
-use editor::{Editor, DisplayInformation};
+use editor::{DisplayInformation, Editor};
 use std::cmp::min;
 use std::time::{Duration, Instant};
 use unicode_segmentation::UnicodeSegmentation;
@@ -15,7 +15,7 @@ pub mod buffer;
 pub mod editor;
 pub mod ui;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Modifiers {
     ctrl: bool,
     shift: bool,
@@ -112,7 +112,9 @@ fn main() {
                 WindowEvent::ReceivedCharacter(c) => {
                     let cheight = ui.character_height();
                     let window_height_in_characters = (io.window_dimensions[1] / cheight) as usize;
-                    let info = DisplayInformation{ window_height_in_characters };
+                    let info = DisplayInformation {
+                        window_height_in_characters,
+                    };
                     editor.handle_input(&c.to_string(), io.current_modifiers, true, &info);
                 }
                 WindowEvent::ModifiersChanged(modifs) => {
@@ -131,8 +133,10 @@ fn main() {
             },
             Event::RedrawRequested(_) => {
                 let now = Instant::now();
-                let _dt = (now - prevt).as_secs_f32();
+                let dt = now - prevt;
                 prevt = now;
+
+                editor.fade_matching_input(dt);
 
                 io.dpi_factor = window.scale_factor();
                 let size = window.inner_size();

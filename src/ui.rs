@@ -24,11 +24,8 @@ impl UI {
         }
     }
     pub fn run(&mut self, io: &mut IO, editor: &Editor) {
-        self.canvas.set_size(
-            io.window_dimensions[0],
-            io.window_dimensions[1],
-            1.0
-        );
+        self.canvas
+            .set_size(io.window_dimensions[0], io.window_dimensions[1], 1.0);
         self.canvas.clear_rect(
             0,
             0,
@@ -76,7 +73,6 @@ impl UI {
         let font_width = text_metrics.width();
         let font_height = font_metrics.height();
 
-
         let cursor_width = match editor.mode {
             editor::Mode::INSERT => font_width / 4.0,
             _ => font_width,
@@ -99,8 +95,7 @@ impl UI {
         let _window_width_in_characters = io.window_dimensions[0] / font_width as u32;
         let window_height_in_characters = io.window_dimensions[1] / font_metrics.height() as u32;
 
-        let status_line_y =
-            ((window_height_in_characters - 2) * font_height as u32) as i32;
+        let status_line_y = ((window_height_in_characters - 2) * font_height as u32) as i32;
         let mut status_line_rect = Path::new();
         status_line_rect.rect(
             0.0,
@@ -115,7 +110,8 @@ impl UI {
             " {} > {} < $ {} {:?}",
             cursor.1,
             editor.editing_file_path,
-            editor.matching_input_text,
+            // editor.matching_input_text,
+            "sorry",
             editor.matching_input_timeout
         );
 
@@ -155,7 +151,6 @@ impl UI {
         ));
         foreground_paint.set_font(&[self.font]);
         foreground_paint.set_font_size(18.0);
-
 
         let font_metrics = self
             .canvas
