@@ -117,7 +117,7 @@ impl UI {
             " {} > {} < $ {} {:?}",
             cursor.1,
             editor.editing_file_path,
-            editor.get_matching_input_text(),
+            editor.matching_input,
             editor.matching_input_timeout
         );
 

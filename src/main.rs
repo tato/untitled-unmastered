@@ -15,41 +15,11 @@ pub mod buffer;
 pub mod editor;
 pub mod ui;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct Modifiers {
-    ctrl: bool,
-    shift: bool,
-    alt: bool,
-    logo: bool,
-}
-impl Default for Modifiers {
-    fn default() -> Self {
-        Self {
-            ctrl: false,
-            shift: false,
-            alt: false,
-            logo: false,
-        }
-    }
-}
-impl From<&glutin::event::ModifiersState> for Modifiers {
-    fn from(it: &glutin::event::ModifiersState) -> Self {
-        Self {
-            ctrl: it.ctrl(),
-            shift: it.shift(),
-            alt: it.alt(),
-            logo: it.logo(),
-        }
-    }
-}
-
 #[derive(Debug, Clone)]
 pub struct IO {
     mouse_position: [f32; 2],
     dpi_factor: f64,
     window_dimensions: [u32; 2],
-
-    current_modifiers: Modifiers,
 }
 impl Default for IO {
     fn default() -> Self {
@@ -57,7 +27,6 @@ impl Default for IO {
             mouse_position: Default::default(),
             dpi_factor: Default::default(),
             window_dimensions: Default::default(),
-            current_modifiers: Default::default(),
         }
     }
 }
@@ -115,10 +84,7 @@ fn main() {
                     let info = DisplayInformation {
                         window_height_in_characters,
                     };
-                    editor.handle_input(&c.to_string(), io.current_modifiers, true, &info);
-                }
-                WindowEvent::ModifiersChanged(modifs) => {
-                    io.current_modifiers = modifs.into();
+                    editor.handle_input(&c.to_string(), true, &info);
                 }
                 WindowEvent::CursorMoved {
                     device_id: _,

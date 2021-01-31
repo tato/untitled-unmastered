@@ -1,6 +1,5 @@
 use crate::*;
 use once_cell::sync::Lazy;
-use regex::Regex;
 
 type EditorCommand = fn(&mut Editor);
 
@@ -22,38 +21,13 @@ pub struct Editor {
 
     current_display_info: DisplayInformation,
 
-    pub matching_input: Vec<KeyPress>,
+    pub matching_input: String,
     pub matching_input_timeout: Duration,
 }
 
 #[derive(Debug, Clone)]
 pub struct DisplayInformation {
     pub window_height_in_characters: usize,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct KeyPress {
-    key: String,
-    modifiers: Modifiers,
-}
-impl<S: Into<String>> From<S> for KeyPress {
-    fn from(s: S) -> KeyPress {
-        let s = s.into();
-        if let Some(cap) = CONTROL_SOMETHING.captures(&s) {
-            KeyPress {
-                key: cap.get(1).unwrap().as_str().to_string(),
-                modifiers: Modifiers {
-                    ctrl: true,
-                    ..Default::default()
-                },
-            }
-        } else {
-            KeyPress {
-                key: s,
-                modifiers: Default::default(),
-            }
-        }
-    }
 }
 
 impl Editor {
@@ -72,7 +46,7 @@ impl Editor {
                 window_height_in_characters: 0,
             },
 
-            matching_input: Vec::new(),
+            matching_input: "".into(),
             matching_input_timeout: Duration::from_secs(1),
         }
     }
@@ -99,19 +73,10 @@ impl Editor {
         self.cursor_animation_instant = Instant::now();
     }
 
-    pub fn handle_input(
-        &mut self,
-        text: &str,
-        modifs: Modifiers,
-        is_text_input: bool,
-        info: &DisplayInformation,
-    ) {
+    pub fn handle_input(&mut self, text: &str, is_text_input: bool, info: &DisplayInformation) {
         self.current_display_info = info.clone();
 
-        self.matching_input.push(KeyPress {
-            key: text.to_string(),
-            modifiers: modifs,
-        });
+        self.matching_input.push_str(text);
         self.matching_input_timeout = Duration::from_secs(1);
 
         match self.mode {
@@ -132,7 +97,7 @@ impl Editor {
         }
 
         if reset_matching_input {
-            self.matching_input = Vec::new();
+            self.matching_input = "".into();
         }
     }
     fn handle_input_in_insert_mode(&mut self, input: &str, is_text_input: bool) {
@@ -152,44 +117,31 @@ impl Editor {
         }
 
         if reset_matching_input {
-            self.matching_input = Vec::new();
+            self.matching_input = "".into();
         }
     }
 
     pub fn fade_matching_input(&mut self, delta: Duration) {
         if delta > self.matching_input_timeout {
-            self.matching_input = Vec::new();
+            self.matching_input = "".into();
         } else {
             self.matching_input_timeout -= delta;
         }
     }
-
-    pub fn get_matching_input_text(&self) -> String {
-        self.matching_input
-            .iter()
-            .map(|it| it.key.clone())
-            .collect::<Vec<_>>()
-            .join("")
-    }
 }
 
-fn kp(s: &'static str) -> Vec<KeyPress> {
-    s.split(" ").map(|it| it.into()).collect()
-}
-
-static CONTROL_SOMETHING: Lazy<Regex> = Lazy::new(|| Regex::new(r"<C-(.)>").unwrap());
-static NORMAL_BINDINGS: Lazy<Vec<(Vec<KeyPress>, EditorCommand)>> = Lazy::new(|| {
+static NORMAL_BINDINGS: Lazy<Vec<(String, EditorCommand)>> = Lazy::new(|| {
     vec![
-        (kp("i"), |editor| editor.mode = Mode::INSERT),
-        (kp("a"), |editor| {
+        ("i".into(), |editor| editor.mode = Mode::INSERT),
+        ("a".into(), |editor| {
             editor.move_cursor_horizontal(1);
             editor.mode = Mode::INSERT;
         }),
-        (kp("h"), |editor| editor.move_cursor_horizontal(-1)),
-        (kp("l"), |editor| editor.move_cursor_horizontal(1)),
-        (kp("k"), |editor| editor.move_cursor_vertical(-1)),
-        (kp("j"), |editor| editor.move_cursor_vertical(1)),
-        (kp("e"), |editor| loop {
+        ("h".into(), |editor| editor.move_cursor_horizontal(-1)),
+        ("l".into(), |editor| editor.move_cursor_horizontal(1)),
+        ("k".into(), |editor| editor.move_cursor_vertical(-1)),
+        ("j".into(), |editor| editor.move_cursor_vertical(1)),
+        ("e".into(), |editor| loop {
             let c = editor.buffer.get_under_cursor();
             if c == " " || c == "\n" {
                 editor.move_cursor_horizontal(-1);
@@ -197,17 +149,13 @@ static NORMAL_BINDINGS: Lazy<Vec<(Vec<KeyPress>, EditorCommand)>> = Lazy::new(||
             }
             editor.move_cursor_horizontal(1);
         }),
-        (kp("d d"), |_editor| println!("dd is nice!")),
-        (kp("<C-a> b <C-c>"), |_editor| println!("abc is nice!")),
-    ]
-});
-
-static INSERT_BINDINGS: Lazy<Vec<(Vec<KeyPress>, EditorCommand)>> = Lazy::new(|| {
-    vec![
-        (kp("\x08"), |editor| editor.buffer.delete_under_cursor()),
-        (kp("\x1b"), |editor| editor.mode = Mode::NORMAL),
-        (kp("\n"), |editor| editor.buffer.insert_under_cursor("\n")),
-        (kp("<C-o>"), |editor| {
+        ("dd".into(), |_editor| println!("dd is nice!")),
+        (" s".into(), |_editor| println!("saving!!!!")),
+        // if !editor.editing_file_path.is_empty() {
+        //     std::fs::write(&editor.editing_file_path, editor.buffer.to_string()).unwrap_or(());
+        // }
+        // }),
+        ("  ".into(), |editor| {
             let result = nfd::open_file_dialog(None, None).unwrap();
 
             if let nfd::Response::Okay(file_path) = result {
@@ -216,10 +164,15 @@ static INSERT_BINDINGS: Lazy<Vec<(Vec<KeyPress>, EditorCommand)>> = Lazy::new(||
                 editor.buffer = buffer::Buffer::from(&t);
             }
         }),
-        (kp("C-s"), |editor| {
-            if !editor.editing_file_path.is_empty() {
-                std::fs::write(&editor.editing_file_path, editor.buffer.to_string()).unwrap_or(());
-            }
+    ]
+});
+
+static INSERT_BINDINGS: Lazy<Vec<(String, EditorCommand)>> = Lazy::new(|| {
+    vec![
+        ("\x08".into(), |editor| editor.buffer.delete_under_cursor()),
+        ("\x1b".into(), |editor| editor.mode = Mode::NORMAL),
+        ("\n".into(), |editor| {
+            editor.buffer.insert_under_cursor("\n")
         }),
     ]
 });
