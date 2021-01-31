@@ -1,14 +1,49 @@
 use crate::{min, UnicodeSegmentation};
+#[derive(Debug)]
+pub enum LineSeparatorFormat {
+    UNIX,
+    DOS,
+}
+impl LineSeparatorFormat {
+    pub fn separator(&self) -> &'static str {
+        match self {
+            LineSeparatorFormat::UNIX => "\n",
+            LineSeparatorFormat::DOS => "\r\n",
+        }
+    }
+}
+impl std::fmt::Display for LineSeparatorFormat {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let t = match self {
+            LineSeparatorFormat::UNIX => "UNIX",
+            LineSeparatorFormat::DOS => "DOS",
+        };
+        write!(f, "{}", t)
+    }
+}
 pub struct Buffer {
     lines: Vec<String>,
 
     cursor_x: usize,
     cursor_y: usize,
     reminder_cursor_x: usize,
+
+    pub line_separator_format: LineSeparatorFormat,
 }
 impl Buffer {
     pub fn from(s: &str) -> Self {
-        let lines = s.split("\n").map(str::to_string).collect::<Vec<_>>();
+        let line_separator_format = {
+            let count = s.split("\n").count();
+            if s.split("\n").take(count - 1).all(|l| l.ends_with("\r")) {
+                LineSeparatorFormat::DOS
+            } else {
+                LineSeparatorFormat::UNIX
+            }
+        };
+        let lines = s
+            .split(line_separator_format.separator())
+            .map(str::to_string)
+            .collect::<Vec<_>>();
         let cursor_x = 0;
         let cursor_y = 0;
         let reminder_cursor_x = 0;
@@ -17,6 +52,7 @@ impl Buffer {
             cursor_x,
             cursor_y,
             reminder_cursor_x,
+            line_separator_format,
         }
     }
     pub fn to_string(&self) -> String {

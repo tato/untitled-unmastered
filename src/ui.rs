@@ -114,11 +114,12 @@ impl UI {
             .fill_path(&mut status_line_rect, foreground_paint);
 
         let status_text = format!(
-            " {} > {} < $ {} {:?}",
+            " {} > {} < $ {} {:?} [{}]",
             cursor.1,
             editor.editing_file_path,
             editor.matching_input,
-            editor.matching_input_timeout
+            editor.matching_input_timeout,
+            editor.buffer.line_separator_format,
         );
 
         self.canvas
