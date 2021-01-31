@@ -42,7 +42,8 @@ fn main() {
 
     let (renderer, windowed_context) = {
         let wb = WindowBuilder::new()
-            .with_inner_size(glutin::dpi::PhysicalSize::new(1000, 600))
+            .with_inner_size(glutin::dpi::PhysicalSize::new(1600, 900))
+            .with_maximized()
             .with_title("UNTITLED!");
 
         let windowed_context = ContextBuilder::new()
@@ -79,7 +80,9 @@ fn main() {
                     windowed_context.resize(*physical_size);
                 }
                 WindowEvent::ReceivedCharacter(mut c) => {
-                    if c == '\r' { c = '\n'; }
+                    if c == '\r' {
+                        c = '\n';
+                    }
 
                     let cheight = ui.character_height().ceil() as u32;
                     let window_height_in_characters = (io.window_dimensions[1] / cheight) as usize;

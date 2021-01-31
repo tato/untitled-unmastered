@@ -40,7 +40,7 @@ impl UI {
     fn get_paint(&self, color: [f32; 4]) -> Paint {
         let mut paint = Paint::color(Color::rgbf(color[0], color[1], color[2]));
         paint.set_font(&[self.font]);
-        paint.set_font_size(18.0);
+        paint.set_font_size(24.0);
         paint.set_text_baseline(femtovg::Baseline::Top);
         paint
     }
