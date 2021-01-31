@@ -130,18 +130,19 @@ impl Editor {
     }
 }
 
-static NORMAL_BINDINGS: Lazy<Vec<(String, EditorCommand)>> = Lazy::new(|| {
+// TODO: remove once_cell and inline this stuff into like a match statement lol
+static NORMAL_BINDINGS: Lazy<Vec<(&'static str, EditorCommand)>> = Lazy::new(|| {
     vec![
-        ("i".into(), |editor| editor.mode = Mode::INSERT),
-        ("a".into(), |editor| {
+        ("i", |editor| editor.mode = Mode::INSERT),
+        ("a", |editor| {
             editor.move_cursor_horizontal(1);
             editor.mode = Mode::INSERT;
         }),
-        ("h".into(), |editor| editor.move_cursor_horizontal(-1)),
-        ("l".into(), |editor| editor.move_cursor_horizontal(1)),
-        ("k".into(), |editor| editor.move_cursor_vertical(-1)),
-        ("j".into(), |editor| editor.move_cursor_vertical(1)),
-        ("e".into(), |editor| loop {
+        ("h", |editor| editor.move_cursor_horizontal(-1)),
+        ("l", |editor| editor.move_cursor_horizontal(1)),
+        ("k", |editor| editor.move_cursor_vertical(-1)),
+        ("j", |editor| editor.move_cursor_vertical(1)),
+        ("e", |editor| loop {
             let c = editor.buffer.get_under_cursor();
             if c == " " || c == "\n" {
                 editor.move_cursor_horizontal(-1);
@@ -149,13 +150,13 @@ static NORMAL_BINDINGS: Lazy<Vec<(String, EditorCommand)>> = Lazy::new(|| {
             }
             editor.move_cursor_horizontal(1);
         }),
-        ("dd".into(), |_editor| println!("dd is nice!")),
-        (" s".into(), |_editor| println!("saving!!!!")),
+        ("dd", |_editor| println!("dd is nice!")),
+        (" s", |_editor| println!("saving!!!!")),
         // if !editor.editing_file_path.is_empty() {
         //     std::fs::write(&editor.editing_file_path, editor.buffer.to_string()).unwrap_or(());
         // }
         // }),
-        ("  ".into(), |editor| {
+        ("  ", |editor| {
             let result = nfd::open_file_dialog(None, None).unwrap();
 
             if let nfd::Response::Okay(file_path) = result {
@@ -167,12 +168,10 @@ static NORMAL_BINDINGS: Lazy<Vec<(String, EditorCommand)>> = Lazy::new(|| {
     ]
 });
 
-static INSERT_BINDINGS: Lazy<Vec<(String, EditorCommand)>> = Lazy::new(|| {
+static INSERT_BINDINGS: Lazy<Vec<(&'static str, EditorCommand)>> = Lazy::new(|| {
     vec![
-        ("\x08".into(), |editor| editor.buffer.delete_under_cursor()),
-        ("\x1b".into(), |editor| editor.mode = Mode::NORMAL),
-        ("\n".into(), |editor| {
-            editor.buffer.insert_under_cursor("\n")
-        }),
+        ("\x08", |editor| editor.buffer.delete_under_cursor()),
+        ("\x1b", |editor| editor.mode = Mode::NORMAL),
+        ("\n", |editor| editor.buffer.insert_under_cursor("\n")),
     ]
 });
