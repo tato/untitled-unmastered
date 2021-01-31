@@ -78,7 +78,9 @@ fn main() {
                 WindowEvent::Resized(physical_size) => {
                     windowed_context.resize(*physical_size);
                 }
-                WindowEvent::ReceivedCharacter(c) => {
+                WindowEvent::ReceivedCharacter(mut c) => {
+                    if c == '\r' { c = '\n'; }
+
                     let cheight = ui.character_height().ceil() as u32;
                     let window_height_in_characters = (io.window_dimensions[1] / cheight) as usize;
                     let info = DisplayInformation {
