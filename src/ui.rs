@@ -1,5 +1,5 @@
 use crate::{editor, Editor, IO};
-use femtovg::{renderer::OpenGl, Canvas, Color, FontId, Paint, Path, FontMetrics};
+use femtovg::{renderer::OpenGl, Canvas, Color, FontId, FontMetrics, Paint, Path};
 use resource::resource;
 
 pub struct UI {
@@ -46,8 +46,11 @@ impl UI {
     }
 
     pub fn run(&mut self, io: &mut IO, editor: &Editor) {
-        self.canvas
-            .set_size(io.window_dimensions[0], io.window_dimensions[1], io.dpi_factor as f32);
+        self.canvas.set_size(
+            io.window_dimensions[0],
+            io.window_dimensions[1],
+            io.dpi_factor as f32,
+        );
         self.canvas.clear_rect(
             0,
             0,
@@ -86,8 +89,7 @@ impl UI {
         let cursor = editor.buffer.cursor();
 
         let cursor_screen_x = cursor.0 as f32 * font_width;
-        let cursor_screen_y =
-            (cursor.1 - editor.y_render_offset) as f32 * self.character_height();
+        let cursor_screen_y = (cursor.1 - editor.y_render_offset) as f32 * self.character_height();
         let mut cursor_target = Path::new();
         cursor_target.rect(
             cursor_screen_x,
@@ -108,24 +110,19 @@ impl UI {
             io.window_dimensions[0] as f32,
             self.character_height(),
         );
-        self.canvas.fill_path(&mut status_line_rect, foreground_paint);
+        self.canvas
+            .fill_path(&mut status_line_rect, foreground_paint);
 
         let status_text = format!(
             " {} > {} < $ {} {:?}",
             cursor.1,
             editor.editing_file_path,
-            // editor.matching_input_text,
-            "sorry",
+            editor.get_matching_input_text(),
             editor.matching_input_timeout
         );
 
         self.canvas
-            .fill_text(
-                0.0,
-                status_line_y,
-                status_text.as_str(),
-                background_paint,
-            )
+            .fill_text(0.0, status_line_y, status_text.as_str(), background_paint)
             .expect("Unexpected rendering error");
 
         for (line_index, line) in editor
@@ -146,6 +143,9 @@ impl UI {
     }
 
     pub fn character_height(&self) -> f32 {
-        self.font_metrics.as_ref().map(FontMetrics::height).unwrap_or(0.0)
+        self.font_metrics
+            .as_ref()
+            .map(FontMetrics::height)
+            .unwrap_or(0.0)
     }
 }

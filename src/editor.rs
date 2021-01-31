@@ -163,6 +163,14 @@ impl Editor {
             self.matching_input_timeout -= delta;
         }
     }
+
+    pub fn get_matching_input_text(&self) -> String {
+        self.matching_input
+            .iter()
+            .map(|it| it.key.clone())
+            .collect::<Vec<_>>()
+            .join("")
+    }
 }
 
 fn kp(s: &'static str) -> Vec<KeyPress> {
