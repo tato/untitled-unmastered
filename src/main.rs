@@ -110,7 +110,7 @@ fn main() {
                     windowed_context.resize(*physical_size);
                 }
                 WindowEvent::ReceivedCharacter(c) => {
-                    let cheight = ui.character_height();
+                    let cheight = ui.character_height().ceil() as u32;
                     let window_height_in_characters = (io.window_dimensions[1] / cheight) as usize;
                     let info = DisplayInformation {
                         window_height_in_characters,
