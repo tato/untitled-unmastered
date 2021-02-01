@@ -128,7 +128,7 @@ impl UI {
 
         for (line_index, line) in editor
             .buffer
-            .to_string()
+            .as_string()
             .split('\n')
             .skip(editor.y_render_offset)
             .take((window_height_in_characters - 2) as usize)

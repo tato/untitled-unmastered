@@ -33,8 +33,8 @@ pub struct Buffer {
 impl Buffer {
     pub fn from(s: &str) -> Self {
         let line_separator_format = {
-            let count = s.split("\n").count();
-            if s.split("\n").take(count - 1).all(|l| l.ends_with("\r")) {
+            let count = s.split('\n').count();
+            if s.split('\n').take(count - 1).all(|l| l.ends_with('\r')) {
                 LineSeparatorFormat::DOS
             } else {
                 LineSeparatorFormat::UNIX
@@ -55,7 +55,7 @@ impl Buffer {
             line_separator_format,
         }
     }
-    pub fn to_string(&self) -> String {
+    pub fn as_string(&self) -> String {
         self.lines.join("\n")
     }
     pub fn cursor(&self) -> (usize, usize) {
@@ -132,19 +132,17 @@ impl Buffer {
             new_line.extend(line_graphemes[self.cursor_x..].iter().cloned());
             self.lines[self.cursor_y] = new_line.join("");
             self.move_cursor_horizontal(-1);
-        } else {
-            if self.cursor_y > 0 {
-                let previous_line_len = UnicodeSegmentation::grapheme_indices(
-                    self.lines[self.cursor_y - 1].as_str(),
-                    true,
-                )
-                .count();
-                self.lines[self.cursor_y] =
-                    self.lines[self.cursor_y - 1].clone() + &self.lines[self.cursor_y];
-                self.lines.remove(self.cursor_y - 1);
-                self.cursor_y -= 1;
-                self.cursor_x = previous_line_len;
-            }
+        } else if self.cursor_y > 0 {
+            let previous_line_len = UnicodeSegmentation::grapheme_indices(
+                self.lines[self.cursor_y - 1].as_str(),
+                true,
+            )
+            .count();
+            self.lines[self.cursor_y] =
+                self.lines[self.cursor_y - 1].clone() + &self.lines[self.cursor_y];
+            self.lines.remove(self.cursor_y - 1);
+            self.cursor_y -= 1;
+            self.cursor_x = previous_line_len;
         }
     }
 }

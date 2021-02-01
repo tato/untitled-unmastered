@@ -1,5 +1,3 @@
-#![allow(clippy::new_without_default)]
-
 use editor::{DisplayInformation, Editor};
 use std::cmp::min;
 use std::time::{Duration, Instant};

@@ -153,7 +153,7 @@ static NORMAL_BINDINGS: Lazy<Vec<(&'static str, EditorCommand)>> = Lazy::new(|| 
         ("dd", |_editor| println!("dd is nice!")),
         (" s", |editor| {
             if !editor.editing_file_path.is_empty() {
-                std::fs::write(&editor.editing_file_path, editor.buffer.to_string()).unwrap_or(());
+                std::fs::write(&editor.editing_file_path, editor.buffer.as_string()).unwrap_or(());
             }
         }),
         ("  ", |editor| {
