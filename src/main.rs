@@ -1,5 +1,3 @@
-#![allow(clippy::new_without_default)]
-
 use editor::{DisplayInformation, Editor};
 use std::cmp::min;
 use std::time::{Duration, Instant};
@@ -74,7 +72,7 @@ fn main() {
         *control_flow = ControlFlow::Poll;
 
         match event {
-            Event::LoopDestroyed => return,
+            Event::LoopDestroyed => {},
             Event::WindowEvent { ref event, .. } => match event {
                 WindowEvent::Resized(physical_size) => {
                     windowed_context.resize(*physical_size);
