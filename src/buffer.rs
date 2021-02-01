@@ -148,3 +148,14 @@ impl Buffer {
         }
     }
 }
+
+mod test {
+    #[test]
+    fn should_insert_at_start_of_line() {
+        let mut buffer = crate::buffer::Buffer::from("");
+        buffer.insert_under_cursor("a");
+        buffer.insert_under_cursor("b");
+        buffer.insert_under_cursor("c");
+        assert_eq!("abc", buffer.to_string());
+    }
+}

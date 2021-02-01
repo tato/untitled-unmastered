@@ -43,7 +43,7 @@ fn main() {
     let (renderer, windowed_context) = {
         let wb = WindowBuilder::new()
             .with_inner_size(glutin::dpi::PhysicalSize::new(1600, 900))
-            .with_maximized()
+            .with_maximized(true)
             .with_title("UNTITLED!");
 
         let windowed_context = ContextBuilder::new()
