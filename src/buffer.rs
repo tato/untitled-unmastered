@@ -149,11 +149,19 @@ impl Buffer {
 
 mod test {
     #[test]
-    fn should_insert_at_start_of_line() {
+    fn should_move_cursor_beyond_end_of_line() {
         let mut buffer = crate::buffer::Buffer::from("");
         buffer.insert_under_cursor("a");
         buffer.insert_under_cursor("b");
         buffer.insert_under_cursor("c");
         assert_eq!("abc", buffer.to_string());
+
+        let mut buffer = crate::buffer::Buffer(from("hi\n\nfriend"))
+        buffer.move_cursor_vertical(1);
+        buffer.insert_under_cursor("b");
+        buffer.insert_under_cursor("e");
+        buffer.insert_under_cursor("s");
+        buffer.insert_under_cursor("t");
+        assert_eq("hi\nbest\nfriend", buffer.to_string());
     }
 }
