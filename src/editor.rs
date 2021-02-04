@@ -3,7 +3,7 @@ use once_cell::sync::Lazy;
 
 type EditorCommand = fn(&mut Editor);
 
-#[derive(PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Mode {
     NORMAL,
     INSERT,
@@ -58,7 +58,7 @@ impl Editor {
     }
 
     pub fn move_cursor_horizontal(&mut self, x: i64) {
-        self.buffer.move_cursor_horizontal(x);
+        self.buffer.move_cursor_horizontal(x, self.mode);
         self.cursor_animation_instant = Instant::now();
     }
 
@@ -118,7 +118,7 @@ impl Editor {
         }
 
         if is_text_input && !reset_matching_input {
-            self.buffer.insert_under_cursor(input);
+            self.buffer.insert_before_cursor(input);
             reset_matching_input = true;
         }
 
@@ -177,7 +177,10 @@ static NORMAL_BINDINGS: Lazy<Vec<(&'static str, EditorCommand)>> = Lazy::new(|| 
 static INSERT_BINDINGS: Lazy<Vec<(&'static str, EditorCommand)>> = Lazy::new(|| {
     vec![
         ("\x08", |editor| editor.buffer.delete_under_cursor()),
-        ("\x1b", |editor| editor.mode = Mode::NORMAL),
-        ("\n", |editor| editor.buffer.insert_under_cursor("\n")),
+        ("\x1b", |editor| {
+            editor.mode = Mode::NORMAL;
+            editor.move_cursor_horizontal(0);
+        }),
+        ("\n", |editor| editor.buffer.insert_before_cursor("\n")),
     ]
 });

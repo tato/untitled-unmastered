@@ -1,5 +1,5 @@
-use crate::{min, UnicodeSegmentation};
-#[derive(Debug)]
+use crate::{min, UnicodeSegmentation, editor::Mode};
+#[derive(Debug, Clone, Copy)]
 pub enum LineSeparatorFormat {
     UNIX,
     DOS,
@@ -21,6 +21,7 @@ impl std::fmt::Display for LineSeparatorFormat {
         write!(f, "{}", t)
     }
 }
+#[derive(Debug, Clone)]
 pub struct Buffer {
     lines: Vec<String>,
 
@@ -61,7 +62,7 @@ impl Buffer {
     pub fn cursor(&self) -> (usize, usize) {
         (self.cursor_x, self.cursor_y)
     }
-    pub fn move_cursor_horizontal(&mut self, x: i64) {
+    pub fn move_cursor_horizontal(&mut self, x: i64, mode: Mode) {
         let length_of_line = self
             .lines
             .get(self.cursor_y)
@@ -69,7 +70,8 @@ impl Buffer {
             .unwrap_or(0);
 
         let moving_beyond_first = x < 0 && self.cursor_x == 0;
-        let moving_beyond_last = x > 0 && self.cursor_x + 1 >= length_of_line;
+        let last = if mode == Mode::INSERT { length_of_line + 1 } else { length_of_line };
+        let moving_beyond_last = x > 0 && self.cursor_x + 1 >= last;
 
         if !moving_beyond_first && !moving_beyond_last {
             self.cursor_x = ((self.cursor_x as i64) + x) as usize;
@@ -98,7 +100,7 @@ impl Buffer {
             .nth(self.cursor_x)
             .unwrap()
     }
-    pub fn insert_under_cursor(&mut self, s: &str) {
+    pub fn insert_before_cursor(&mut self, s: &str) {
         debug_assert!(self.cursor_y < self.lines.len());
         let line_graphemes =
             UnicodeSegmentation::graphemes(self.lines[self.cursor_y].as_str(), true)
@@ -118,7 +120,7 @@ impl Buffer {
             self.lines[self.cursor_y] = line_graphemes[..self.cursor_x].join("")
                 + s
                 + &line_graphemes[self.cursor_x..].join("");
-            self.move_cursor_horizontal(1);
+            self.move_cursor_horizontal(1, Mode::INSERT);
         }
     }
     pub fn delete_under_cursor(&mut self) {
@@ -131,7 +133,7 @@ impl Buffer {
             new_line.extend(line_graphemes[..self.cursor_x - 1].iter().cloned());
             new_line.extend(line_graphemes[self.cursor_x..].iter().cloned());
             self.lines[self.cursor_y] = new_line.join("");
-            self.move_cursor_horizontal(-1);
+            self.move_cursor_horizontal(-1, Mode::INSERT);
         } else if self.cursor_y > 0 {
             let previous_line_len = UnicodeSegmentation::grapheme_indices(
                 self.lines[self.cursor_y - 1].as_str(),
@@ -151,17 +153,17 @@ mod test {
     #[test]
     fn should_move_cursor_beyond_end_of_line() {
         let mut buffer = crate::buffer::Buffer::from("");
-        buffer.insert_under_cursor("a");
-        buffer.insert_under_cursor("b");
-        buffer.insert_under_cursor("c");
-        assert_eq!("abc", buffer.to_string());
+        buffer.insert_before_cursor("a");
+        buffer.insert_before_cursor("b");
+        buffer.insert_before_cursor("c");
+        assert_eq!("abc", buffer.as_string());
 
-        let mut buffer = crate::buffer::Buffer(from("hi\n\nfriend"))
+        let mut buffer = crate::buffer::Buffer::from("hi\n\nfriend");
         buffer.move_cursor_vertical(1);
-        buffer.insert_under_cursor("b");
-        buffer.insert_under_cursor("e");
-        buffer.insert_under_cursor("s");
-        buffer.insert_under_cursor("t");
-        assert_eq("hi\nbest\nfriend", buffer.to_string());
+        buffer.insert_before_cursor("b");
+        buffer.insert_before_cursor("e");
+        buffer.insert_before_cursor("s");
+        buffer.insert_before_cursor("t");
+        assert_eq!("hi\nbest\nfriend", buffer.as_string());
     }
 }
